@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃ看護 | シミュレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EFF3F1;
+    --panel: #FFFFFF;
+    --ink: #1F2E2B;
+    --ink-soft: #5B6D68;
+    --line: #DCE4E1;
+
+    --nurse: #2F6F62;
+    --nurse-soft: #DCEBE7;
+    --nurse-deep: #1D4A40;
+
+    --family: #C97B6B;
+    --family-soft: #F6E4DF;
+    --family-deep: #96473A;
+
+    --night: #3B4C7A;
+
+    --radius: 14px;
+    --shadow: 0 10px 30px rgba(31,46,43,0.08);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{ font-family:'Shippori Mincho', serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  button{ font-family:inherit; cursor:pointer; border:none; }
+  input, textarea, select{ font-family:inherit; }
+
+  /* ---------- app bar ---------- */
+  .appbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+  }
+  .appbar .brand{ display:flex; align-items:baseline; gap:10px; }
+  .appbar .brand .mark{ font-size:22px; letter-spacing:.02em; }
+  .appbar .brand .tag{ font-size:12px; color:var(--ink-soft); letter-spacing:.08em; }
+  .appbar .mode-pill{
+    font-size:12px; padding:6px 14px; border-radius:99px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .mode-pill.nurse{ background:var(--nurse-soft); color:var(--nurse-deep); }
+  .mode-pill.family{ background:var(--family-soft); color:var(--family-deep); }
+  .mode-pill .dot{ width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .switch-btn{
+    background:transparent; color:var(--ink-soft); font-size:13px;
+    border:1px solid var(--line); padding:8px 14px; border-radius:10px;
+    transition:.15s;
+  }
+  .switch-btn:hover{ border-color:var(--ink-soft); color:var(--ink); }
+
+  /* ---------- screens ---------- */
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  /* ---------- portal screen ---------- */
+  .portal{
+    max-width:980px; margin:0 auto; padding:64px 24px 80px;
+    text-align:center;
+  }
+  .portal .brandname{
+    font-size:15px; font-weight:700; letter-spacing:.14em; color:var(--nurse-deep);
+    margin-bottom:14px;
+  }
+  .portal h1{
+    font-size:38px; font-weight:700; line-height:1.5; margin:0 0 6px;
+  }
+  .portal .sub{ color:var(--ink-soft); font-size:14px; margin-bottom:56px; letter-spacing:.03em; }
+
+  .portal-cards{
+    display:grid; grid-template-columns:1fr 1fr; gap:28px;
+    position:relative;
+  }
+  @media(max-width:720px){ .portal-cards{ grid-template-columns:1fr; } }
+
+  .portal-card{
+    background:var(--panel); border-radius:20px; padding:40px 32px;
+    box-shadow:var(--shadow); text-align:left; position:relative; overflow:hidden;
+    border:1px solid var(--line);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .portal-card:hover{ transform:translateY(-4px); box-shadow:0 16px 40px rgba(31,46,43,0.14); }
+  .portal-card .icon{
+    width:52px; height:52px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; margin-bottom:22px;
+  }
+  .portal-card.nurse .icon{ background:var(--nurse-soft); color:var(--nurse-deep); }
+  .portal-card.family .icon{ background:var(--family-soft); color:var(--family-deep); }
+  .portal-card h2{ font-size:22px; margin:0 0 8px; }
+  .portal-card p{ font-size:13.5px; color:var(--ink-soft); line-height:1.8; margin:0 0 26px; }
+  .portal-card .enter{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:500; padding:11px 20px; border-radius:10px;
+    color:#fff;
+  }
+  .portal-card.nurse .enter{ background:var(--nurse); }
+  .portal-card.family .enter{ background:var(--family); }
+  .portal-card .enter:hover{ filter:brightness(1.06); }
+
+  .portal-foot{ margin-top:52px; font-size:12px; color:var(--ink-soft); letter-spacing:.05em; }
+
+  /* ---------- layout shells ---------- */
+  .shell{ display:grid; grid-template-columns:280px 1fr; min-height:calc(100vh - 61px); }
+  @media(max-width:860px){ .shell{ grid-template-columns:1fr; } }
+
+  .sidebar{
+    background:var(--panel); border-right:1px solid var(--line);
+    padding:20px 16px; overflow-y:auto;
+  }
+  .sidebar .label{ font-size:11px; color:var(--ink-soft); letter-spacing:.1em; padding:0 8px 10px; }
+  .patient-item{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 10px; border-radius:12px; cursor:pointer; margin-bottom:4px;
+    transition:.12s;
+  }
+  .patient-item:hover{ background:var(--bg); }
+  .patient-item.active{ background:var(--nurse-soft); }
+  .avatar{
+    width:38px; height:38px; border-radius:50%; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; color:#fff; background:var(--nurse-deep);
+  }
+  .patient-item .meta{ flex:1; min-width:0; }
+  .patient-item .name{ font-size:14px; font-weight:500; }
+  .patient-item .room{ font-size:11.5px; color:var(--ink-soft); }
+  .flag{
+    width:8px; height:8px; border-radius:50%; flex:0 0 auto;
+  }
+  .flag.high{ background:#C9564A; }
+  .flag.mid{ background:#D9A441; }
+  .flag.low{ background:#7FA98B; }
+
+  .main{ padding:28px 32px 60px; max-width:920px; }
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:24px; margin-bottom:20px;
+  }
+  .card h3{ font-size:15px; margin:0 0 16px; display:flex; align-items:center; gap:8px; }
+  .card h3 .n{ color:var(--nurse); }
+
+  .profile-top{ display:flex; align-items:center; gap:16px; margin-bottom:18px; }
+  .profile-top .avatar{ width:56px; height:56px; font-size:18px; }
+  .profile-top .pname{ font-size:19px; font-weight:700; }
+  .profile-top .psub{ font-size:12.5px; color:var(--ink-soft); }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:520px){ .grid2{ grid-template-columns:1fr; } }
+  .field{ font-size:13px; }
+  .field .k{ color:var(--ink-soft); font-size:11.5px; margin-bottom:3px; letter-spacing:.03em; }
+  .field .v{ font-weight:500; }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .chip{
+    font-size:12px; padding:6px 12px; border-radius:99px;
+    background:var(--bg); color:var(--ink); border:1px solid var(--line);
+  }
+  .chip.warn{ background:#FCEEE9; color:#A8503E; border-color:#F1CFC2; }
+
+  textarea.notes{
+    width:100%; min-height:110px; border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; font-size:13px; line-height:1.75; resize:vertical; background:var(--bg);
+  }
+
+  .ai-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--nurse); color:#fff; font-size:13px; font-weight:500;
+    padding:10px 18px; border-radius:10px; margin-top:12px;
+  }
+  .ai-btn:hover{ filter:brightness(1.08); }
+  .ai-btn:disabled{ opacity:.6; cursor:default; }
+  .ai-btn .spin{
+    width:13px; height:13px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.4); border-top-color:#fff;
+    animation:spin .7s linear infinite; display:none;
+  }
+  .ai-btn.loading .spin{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .ai-summary{
+    margin-top:16px; padding:16px 18px; border-radius:10px;
+    background:var(--nurse-soft); border:1px solid #C7DED8;
+    font-size:13.5px; line-height:1.85; color:var(--nurse-deep);
+    display:none;
+  }
+  .ai-summary.show{ display:block; animation:fadeIn .4s ease; }
+  .ai-summary .tag{ font-size:11px; letter-spacing:.06em; font-weight:700; margin-bottom:8px; display:block; }
+  @keyframes fadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0);} }
+
+  .log-form{ display:flex; flex-direction:column; gap:10px; }
+  .log-row{ display:flex; gap:10px; }
+  .log-row select, .log-row input{
+    border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-size:13px; background:var(--bg);
+  }
+  .save-btn{
+    align-self:flex-start; background:var(--nurse-deep); color:#fff; font-size:13px;
+    padding:9px 18px; border-radius:9px; font-weight:500;
+  }
+  .save-btn:hover{ filter:brightness(1.1); }
+
+  .loglist{ margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+  .logitem{ font-size:12.5px; padding:10px 12px; border-radius:8px; background:var(--bg); display:flex; gap:10px; }
+  .logitem .t{ color:var(--ink-soft); flex:0 0 auto; }
+
+  /* ---------- family screen specifics ---------- */
+  .family-hero{
+    background:linear-gradient(135deg, var(--family-soft), #fff);
+    border:1px solid #F1D9D0; border-radius:16px; padding:26px 28px; margin-bottom:20px;
+    display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;
+  }
+  .family-hero .l h2{ margin:0 0 6px; font-size:20px; }
+  .family-hero .l p{ margin:0; font-size:13px; color:var(--ink-soft); }
+  .call-btn{
+    background:var(--family); color:#fff; font-size:14px; font-weight:500;
+    padding:13px 24px; border-radius:12px; display:flex; align-items:center; gap:8px;
+    box-shadow:0 8px 20px rgba(201,123,107,0.35);
+  }
+  .call-btn:hover{ filter:brightness(1.06); }
+
+  .status-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .status-row:last-child{ border-bottom:none; }
+  .status-row .k{ color:var(--ink-soft); }
+  .status-row .v{ font-weight:500; display:flex; align-items:center; gap:6px; }
+  .badge-ok{ color:#3E7A5C; }
+  .badge-ok::before{ content:"●"; font-size:8px; }
+
+  .chat{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; max-height:260px; overflow-y:auto; padding-right:4px; }
+  .msg{ max-width:75%; padding:10px 14px; border-radius:14px; font-size:13px; line-height:1.6; }
+  .msg.them{ background:var(--bg); align-self:flex-start; border-bottom-left-radius:4px; }
+  .msg.me{ background:var(--family); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+  .msg .who{ font-size:10.5px; opacity:.65; margin-bottom:3px; display:block; }
+  .nurse-chat .msg.me{ background:var(--nurse-deep); }
+
+  .chat-input{ display:flex; gap:8px; }
+  .chat-input input{
+    flex:1; border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-size:13px; background:var(--bg);
+  }
+  .chat-send{ background:var(--family-deep); color:#fff; padding:0 18px; border-radius:10px; font-size:13px; font-weight:500; }
+  .chat-send:hover{ filter:brightness(1.1); }
+
+  .stamp-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .stamp-btn{
+    font-size:12px; padding:7px 13px; border-radius:99px;
+    background:var(--family-soft); color:var(--family-deep); border:1px solid #F1D9D0;
+    transition:.12s;
+  }
+  .stamp-btn:hover{ background:#F1D0C6; }
+
+  .np-input{
+    width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-size:13px; background:#fff;
+  }
+  #watchStatusForm.show{ display:flex; }
+  #watchStatusForm .field{ font-size:13px; }
+  #watchStatusForm .k{ color:var(--ink-soft); font-size:11.5px; margin-bottom:4px; }
+
+  .id-badge{
+    display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono', monospace;
+    background:var(--nurse-deep); color:#fff; font-size:12px; padding:4px 10px; border-radius:7px; letter-spacing:.04em;
+  }
+
+  /* ---------- modal (video call) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(20,20,20,.55);
+    display:none; align-items:center; justify-content:center; z-index:50;
+  }
+  .modal-overlay.show{ display:flex; }
+  .call-modal{
+    width:min(420px, 90vw); background:#1B2430; border-radius:20px; padding:0; overflow:hidden;
+    color:#fff; box-shadow:0 30px 80px rgba(0,0,0,.4);
+  }
+  .call-video{
+    height:320px; background:linear-gradient(160deg,#2A3B52,#16202C);
+    display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative;
+  }
+  .call-video .big-avatar{
+    width:96px; height:96px; border-radius:50%; background:var(--family);
+    display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:700; margin-bottom:14px;
+  }
+  .call-video .name{ font-size:16px; font-weight:500; }
+  .call-video .timer{ font-size:12.5px; opacity:.7; margin-top:6px; font-family:'JetBrains Mono',monospace; }
+  .call-video .small-self{
+    position:absolute; bottom:14px; right:14px; width:64px; height:86px; border-radius:10px;
+    background:#0F1620; border:1px solid rgba(255,255,255,.15);
+    display:flex; align-items:center; justify-content:center; font-size:11px; color:rgba(255,255,255,.5);
+  }
+  .call-controls{ display:flex; justify-content:center; gap:16px; padding:20px; background:#14181f; }
+  .call-controls button{
+    width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:#2A3340; color:#fff; font-size:17px;
+  }
+  .call-controls button.end{ background:#C9564A; width:60px; }
+  .call-controls button:hover{ filter:brightness(1.15); }
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; font-size:13px; padding:12px 22px; border-radius:10px;
+    opacity:0; pointer-events:none; transition:.25s; z-index:60;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+  <!-- ============ LOGIN SCREEN ============ -->
+  <section id="screen-login" class="screen active">
+    <div class="portal">
+      <div class="brandname serif">めっちゃ看護</div>
+      <h1>いつでも どこでも<br>ひとりじゃない</h1>
+      <div class="sub">NURSE × FAMILY CONNECTED CARE</div>
+
+      <div style="max-width:360px; margin:0 auto 18px;">
+        <div style="font-size:12px; color:var(--ink-soft); text-align:left; margin-bottom:6px;">お名前</div>
+        <input type="text" id="loginName" placeholder="例：佐藤 由美"
+          style="width:100%; border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:14px; background:#fff;">
+      </div>
+
+      <div style="max-width:360px; margin:0 auto 40px;">
+        <div style="font-size:12px; color:var(--ink-soft); text-align:left; margin-bottom:6px;">患者ID（家族の方のみ・看護師から伝えられたID）</div>
+        <input type="text" id="loginPatientId" placeholder="例：IIZ0001"
+          style="width:100%; border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:14px; background:#fff; text-transform:uppercase;">
+      </div>
+
+      <div class="portal-cards">
+        <div class="portal-card nurse" onclick="login('nurse')">
+          <div class="icon">🩺</div>
+          <h2>看護師用</h2>
+          <p>担当患者のプロフィールと今の課題を一目で把握。カルテはAIが自動で要約し、記録の負担を減らします。</p>
+          <span class="enter">看護師としてログイン　→</span>
+        </div>
+        <div class="portal-card family" onclick="login('family')">
+          <div class="icon">🏠</div>
+          <h2>家族用</h2>
+          <p>離れていても今日の様子がわかる。ビデオ通話とやさしい見守り機能で、いつでもつながれます。</p>
+          <span class="enter">家族としてログイン　→</span>
+        </div>
+      </div>
+      <div class="portal-foot">※ 入力した記録・メッセージはこのアプリを開いた全員に共有されます。</div>
+    </div>
+  </section>
+
+  <!-- ============ NURSE SCREEN ============ -->
+  <section id="screen-nurse" class="screen">
+    <div class="appbar">
+      <div class="brand">
+        <span class="mark serif">めっちゃ看護</span>
+        <span class="tag">NURSE MODE</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="mode-pill nurse"><span class="dot"></span><span id="nurseWelcome">看護師として閲覧中</span></span>
+        <button class="switch-btn" onclick="logout()">ログアウト</button>
+      </div>
+    </div>
+
+    <div class="shell">
+      <div class="sidebar">
+        <div class="label" id="patientCountLabel">担当患者</div>
+        <input type="text" id="patientSearch" placeholder="🔍 患者名で検索" oninput="renderPatientList()"
+               style="width:100%; border:1px solid var(--line); border-radius:9px; padding:9px 12px; font-size:13px; background:var(--bg); margin-bottom:10px;">
+        <button onclick="toggleAddPatientForm()" style="width:100%; background:var(--nurse); color:#fff; font-size:13px; font-weight:500; padding:10px; border-radius:9px; margin-bottom:14px;">＋ 新規患者を登録</button>
+
+        <div id="addPatientForm" style="display:none; background:var(--bg); border-radius:12px; padding:14px; margin-bottom:14px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <input type="text" id="npName" placeholder="氏名" class="np-input">
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="npRoom" placeholder="部屋番号" class="np-input" style="width:50%;">
+              <input type="number" id="npAge" placeholder="年齢" class="np-input" style="width:50%;">
+            </div>
+            <select id="npSex" class="np-input"><option>女性</option><option>男性</option></select>
+            <input type="text" id="npDiag" placeholder="診断名" class="np-input">
+            <input type="text" id="npAllergy" placeholder="アレルギー（なければ「なし」）" class="np-input">
+            <button onclick="addPatient()" style="background:var(--nurse-deep); color:#fff; font-size:13px; font-weight:500; padding:9px; border-radius:8px;">登録してIDを発行</button>
+          </div>
+        </div>
+
+        <div id="patientList"></div>
+      </div>
+      <div class="main" id="nurseMain"></div>
+    </div>
+  </section>
+
+  <!-- ============ FAMILY SCREEN ============ -->
+  <section id="screen-family" class="screen">
+    <div class="appbar">
+      <div class="brand">
+        <span class="mark serif">めっちゃ看護</span>
+        <span class="tag">FAMILY MODE</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="mode-pill family"><span class="dot"></span><span id="familyWelcome">家族として閲覧中</span></span>
+        <button class="switch-btn" onclick="logout()">ログアウト</button>
+      </div>
+    </div>
+
+    <div class="main" style="max-width:760px; margin:0 auto; padding-top:32px;">
+
+      <div class="family-hero">
+        <div class="l">
+          <h2 id="familyPatientName">読み込み中…</h2>
+          <p id="familyPatientMeta"></p>
+        </div>
+        <button class="call-btn" onclick="openCall()">📹　ビデオ通話をかける</button>
+      </div>
+
+      <div class="card">
+        <h3><span class="n">●</span> 今日の様子（看護師のAI要約より）</h3>
+        <div class="ai-summary show" style="margin-top:0;" id="familyAiSummaryBox">
+          <span class="tag">読み込み中…</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🗒️ 看護師からの最新記録
+          <button onclick="refreshAiSummary(); refreshFamilyRecords(); refreshChat();" style="margin-left:auto; background:none; font-size:11.5px; color:var(--ink-soft); border:1px solid var(--line); padding:5px 10px; border-radius:8px;">更新</button>
+        </h3>
+        <div class="loglist" id="familyRecordList" style="margin-top:0;">
+          <div style="font-size:12.5px; color:var(--ink-soft);">読み込み中…</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📱 端末の見守り状況
+          <button onclick="toggleWatchForm()" style="margin-left:auto; background:none; font-size:11.5px; color:var(--ink-soft); border:1px solid var(--line); padding:5px 10px; border-radius:8px;">編集</button>
+        </h3>
+        <div id="watchStatusView">
+          <div style="font-size:12.5px; color:var(--ink-soft);">読み込み中…</div>
+        </div>
+        <div id="watchStatusForm" style="display:none; margin-top:10px; flex-direction:column; gap:8px;">
+          <div class="field"><div class="k">最終起動</div>
+            <input type="text" id="wLastActive" placeholder="例：今日 13:42（3時間前）" class="np-input"></div>
+          <div class="field"><div class="k">充電状況</div>
+            <input type="text" id="wBattery" placeholder="例：78%・充電中" class="np-input"></div>
+          <div class="field"><div class="k">今日の気分チェック</div>
+            <select id="wMood" class="np-input">
+              <option value="😊 元気です">😊 元気です</option>
+              <option value="🙂 まあまあです">🙂 まあまあです</option>
+              <option value="😔 あまり元気がありません">😔 あまり元気がありません</option>
+            </select>
+          </div>
+          <button onclick="saveWatchStatus()" style="background:var(--family-deep); color:#fff; font-size:13px; font-weight:500; padding:9px; border-radius:8px; margin-top:4px;">見守り状況を保存</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>💬 病棟とのメッセージ</h3>
+        <div class="chat" id="chatBox">
+          <div style="font-size:12.5px; color:var(--ink-soft);">読み込み中…</div>
+        </div>
+        <div class="chat-input">
+          <input id="chatInput" type="text" placeholder="メッセージを入力…" onkeydown="if(event.key==='Enter') sendMsg()">
+          <button class="chat-send" onclick="sendMsg()">送信</button>
+        </div>
+        <div class="stamp-row">
+          <button class="stamp-btn" onclick="sendStamp('ありがとうございます😊')">🙏 ありがとうございます</button>
+          <button class="stamp-btn" onclick="sendStamp('安心しました')">😌 安心しました</button>
+          <button class="stamp-btn" onclick="sendStamp('よろしくお願いします')">🙇 よろしくお願いします</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ VIDEO CALL MODAL ============ -->
+  <div class="modal-overlay" id="callOverlay">
+    <div class="call-modal">
+      <div class="call-video">
+        <div class="big-avatar">花</div>
+        <div class="name">田中 花子 さん</div>
+        <div class="timer" id="callTimer">00:00</div>
+        <div class="small-self">あなた</div>
+      </div>
+      <div class="call-controls">
+        <button title="マイク">🎤</button>
+        <button title="カメラ">📷</button>
+        <button class="end" onclick="closeCall()" title="終了">📴</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- seed data（初回のみ投入するデモ患者） ---------------- */
+const SEED_PATIENTS = [
+  {
+    id:1, name:"田中 花子", room:"305", age:82, sex:"女性",
+    diag:"大腿骨頸部骨折・術後リハビリ", allergy:"ペニシリン系",
+    admitted:"2026/07/20", flag:"mid",
+    issues:["転倒リスク:中","リハビリ意欲:良好","食事量:やや低下"],
+    rawNotes:"7/20入院。術後3日目。リハビリでは歩行器使用し病棟内1周歩行可能。食事は主食6〜8割摂取。夜間不眠の訴えあり、軽度の不安感。家族の面会を楽しみにしている様子。血圧・体温は安定。",
+    aiSummary:"術後3日目、リハビリは順調に進行中（歩行器で病棟内1周可）。食事摂取はやや低下傾向のため経過観察が必要。夜間は軽度の不眠と不安感の訴えあり、精神的なケアと家族との面会機会の確保が有効と考えられる。バイタルは安定。",
+    familyCode:"IIZ0001"
+  },
+  {
+    id:2, name:"山本 大輔", room:"212", age:56, sex:"男性",
+    diag:"2型糖尿病・血糖コントロール目的入院", allergy:"なし",
+    admitted:"2026/07/28", flag:"low",
+    issues:["血糖管理:安定","服薬指導:実施中"],
+    rawNotes:"食事療法と運動療法を並行して実施中。血糖値は入院時より改善傾向。インスリン自己注射の手技を確認、概ね自立して実施可能。退院後の生活指導が今後の課題。",
+    aiSummary:"血糖コントロールは入院時より改善傾向にあり、インスリン自己注射手技もほぼ自立。今後は退院後の生活・食事指導の定着が課題であり、栄養士との連携継続を推奨。",
+    familyCode:"IIZ0002"
+  },
+  {
+    id:3, name:"佐々木 美咲", room:"118", age:34, sex:"女性",
+    diag:"虫垂炎術後", allergy:"なし",
+    admitted:"2026/08/03", flag:"low",
+    issues:["術後経過:良好","疼痛管理中"],
+    rawNotes:"術後2日目。創部の状態良好、感染兆候なし。疼痛はNRS2〜3程度でコントロール良好。明日より食事再開予定。",
+    aiSummary:"術後経過は良好で創部感染の兆候なし。疼痛も鎮痛薬でコントロールできており、明日からの食事再開に向け問題ない状態。",
+    familyCode:"IIZ0003"
+  },
+  {
+    id:4, name:"高橋 勇", room:"402", age:74, sex:"男性",
+    diag:"誤嚥性肺炎", allergy:"造影剤",
+    admitted:"2026/08/01", flag:"high",
+    issues:["嚥下機能:要注意","発熱あり","家族への説明:未実施"],
+    rawNotes:"発熱38.2℃継続。嚥下評価の結果、とろみ食への変更が必要。呼吸状態はやや努力様。家族への病状説明が未実施のため、明日の面談を調整中。",
+    aiSummary:"発熱が継続しており呼吸状態にもやや努力様がみられるため注意深い観察が必要。嚥下機能低下によりとろみ食への変更を実施済み。家族への病状説明が未実施のため、早急な面談調整を推奨する。",
+    familyCode:"IIZ0004"
+  }
+];
+
+let patients = [];
+let patientsLoaded = false;
+let currentPatientId = null;
+let currentUser = null; // { name, role }
+let currentFamilyPatient = null; // 家族としてログインした際に紐づく患者
+let familyPollTimer = null;
+let nursePollTimer = null;
+
+function nowTimeStr(){
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+/* =========================================================
+   Supabase 連携設定
+   ここに Supabase プロジェクトの URL と anon key を入れると、
+   自動的に Supabase を使ったデータ保存に切り替わります。
+   未設定のままなら、アプリ内蔵のクラウド保存(window.storage)で
+   引き続き動作します（デモ・検証用）。
+   ========================================================= */
+const SUPABASE_URL = "https://jurpatzszdlrgyghyvog.supabase.co";        // 例: "https://xxxxxxxx.supabase.co"
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1cnBhdHpzemRscmd5Z2h5dm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzg3ODIsImV4cCI6MjEwNDYxNDc4Mn0.8OBnLhBTXSLqszdXxUcFqX_B2IzWFSNzgypQ583huz8";   // Supabase の「anon / public」キー
+const useSupabase = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+function sbHeaders(extra){
+  return Object.assign({
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    "Content-Type": "application/json"
+  }, extra || {});
+}
+
+/* ---------------- window.storage 経由のフォールバック ---------------- */
+async function loadList(key){
+  try{
+    const res = await window.storage.get(key, true);
+    return res ? JSON.parse(res.value) : [];
+  }catch(e){
+    return [];
+  }
+}
+async function saveList(key, arr){
+  try{
+    const res = await window.storage.set(key, JSON.stringify(arr), true);
+    if(!res){ showToast('保存に失敗しました。もう一度お試しください'); return false; }
+    return true;
+  }catch(e){
+    showToast('保存に失敗しました。もう一度お試しください');
+    return false;
+  }
+}
+
+/* ---------------- patients ---------------- */
+async function getPatients(){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/patients?order=id.asc`, { headers: sbHeaders() });
+      if(!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      return rows.map(r => ({
+        id:r.id, name:r.name, room:r.room, age:r.age, sex:r.sex, diag:r.diag, allergy:r.allergy,
+        admitted:r.admitted, flag:r.flag, issues:r.issues||[], rawNotes:r.raw_notes||'', aiSummary:r.ai_summary||'',
+        familyCode:r.family_code
+      }));
+    }catch(e){ console.error(e); showToast('Supabaseからの読み込みに失敗しました'); return []; }
+  }
+  return loadList('patients_list');
+}
+async function createPatient(p){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/patients`, {
+        method: "POST",
+        headers: sbHeaders({ "Prefer": "return=minimal" }),
+        body: JSON.stringify([{
+          id:p.id, name:p.name, room:p.room, age:p.age, sex:p.sex, diag:p.diag, allergy:p.allergy,
+          admitted:p.admitted, flag:p.flag, issues:p.issues, raw_notes:p.rawNotes, ai_summary:p.aiSummary,
+          family_code:p.familyCode
+        }])
+      });
+      if(!res.ok) throw new Error(await res.text());
+      return true;
+    }catch(e){ console.error(e); showToast('Supabaseへの保存に失敗しました'); return false; }
+  }
+  const list = await loadList('patients_list');
+  list.push(p);
+  return saveList('patients_list', list);
+}
+
+function generateFamilyCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code;
+  do{
+    code = 'IIZ' + Array.from({length:4}, ()=> chars[Math.floor(Math.random()*chars.length)]).join('');
+  } while(patients.some(p=>p.familyCode===code));
+  return code;
+}
+
+async function ensurePatientsLoaded(){
+  if(patientsLoaded) return;
+  let list = await getPatients();
+  if(list.length === 0){
+    for(const p of SEED_PATIENTS){ await createPatient(p); }
+    list = SEED_PATIENTS.slice();
+  }
+  patients = list;
+  patientsLoaded = true;
+}
+
+/* ---------------- records ---------------- */
+async function getRecords(patientId){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/records?patient_id=eq.${patientId}&order=created_at.desc`, {
+        headers: sbHeaders()
+      });
+      if(!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      return rows.map(r => ({ time: r.time, category: r.category, memo: r.memo, author: r.author }));
+    }catch(e){
+      console.error(e); showToast('Supabaseからの読み込みに失敗しました');
+      return [];
+    }
+  }
+  return loadList(`records:${patientId}`);
+}
+async function addRecord(patientId, entry){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/records`, {
+        method: "POST",
+        headers: sbHeaders({ "Prefer": "return=minimal" }),
+        body: JSON.stringify([{ patient_id: patientId, time: entry.time, category: entry.category, memo: entry.memo, author: entry.author }])
+      });
+      if(!res.ok) throw new Error(await res.text());
+      return true;
+    }catch(e){
+      console.error(e); showToast('Supabaseへの保存に失敗しました');
+      return false;
+    }
+  }
+  const records = await loadList(`records:${patientId}`);
+  records.unshift(entry);
+  return saveList(`records:${patientId}`, records);
+}
+
+/* ---------------- chat（看護師⇔家族 共通） ---------------- */
+async function getChatMessages(patientId){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/chat_messages?patient_id=eq.${patientId}&order=created_at.asc`, {
+        headers: sbHeaders()
+      });
+      if(!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      return rows.map(r => ({ who: r.who, name: r.name, text: r.text, time: r.time }));
+    }catch(e){
+      console.error(e); showToast('Supabaseからの読み込みに失敗しました');
+      return [];
+    }
+  }
+  return loadList(`chat:${patientId}`);
+}
+async function addChatMessage(patientId, msg){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/chat_messages`, {
+        method: "POST",
+        headers: sbHeaders({ "Prefer": "return=minimal" }),
+        body: JSON.stringify([{ patient_id: patientId, who: msg.who, name: msg.name, text: msg.text, time: msg.time }])
+      });
+      if(!res.ok) throw new Error(await res.text());
+      return true;
+    }catch(e){
+      console.error(e); showToast('Supabaseへの保存に失敗しました');
+      return false;
+    }
+  }
+  const msgs = await loadList(`chat:${patientId}`);
+  msgs.push(msg);
+  return saveList(`chat:${patientId}`, msgs);
+}
+
+/* ---------------- AI要約（家族画面にも反映） ---------------- */
+async function getAiSummary(patientId){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/ai_summaries?patient_id=eq.${patientId}`, {
+        headers: sbHeaders()
+      });
+      if(!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      return rows[0] ? { summary: rows[0].summary, updatedAt: rows[0].updated_at } : null;
+    }catch(e){
+      console.error(e); return null;
+    }
+  }
+  const res = await loadList(`aisummary:${patientId}`);
+  return res.length ? res[0] : null;
+}
+async function saveAiSummary(patientId, summaryText){
+  const updatedAt = new Date().toISOString();
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/ai_summaries?on_conflict=patient_id`, {
+        method: "POST",
+        headers: sbHeaders({ "Prefer": "resolution=merge-duplicates" }),
+        body: JSON.stringify([{ patient_id: patientId, summary: summaryText, updated_at: updatedAt }])
+      });
+      if(!res.ok) throw new Error(await res.text());
+      return true;
+    }catch(e){
+      console.error(e); showToast('Supabaseへの保存に失敗しました');
+      return false;
+    }
+  }
+  return saveList(`aisummary:${patientId}`, [{ summary: summaryText, updatedAt }]);
+}
+
+/* ---------------- 見守り状況 ---------------- */
+async function getWatchStatus(patientId){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?patient_id=eq.${patientId}`, { headers: sbHeaders() });
+      if(!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      return rows[0] ? { lastActive:rows[0].last_active, battery:rows[0].battery, mood:rows[0].mood, updatedAt:rows[0].updated_at } : null;
+    }catch(e){ console.error(e); return null; }
+  }
+  const res = await loadList(`watch:${patientId}`);
+  return res.length ? res[0] : null;
+}
+async function saveWatchStatusData(patientId, data){
+  const updatedAt = new Date().toISOString();
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?on_conflict=patient_id`, {
+        method: "POST",
+        headers: sbHeaders({ "Prefer": "resolution=merge-duplicates" }),
+        body: JSON.stringify([{ patient_id: patientId, last_active:data.lastActive, battery:data.battery, mood:data.mood, updated_at:updatedAt }])
+      });
+      if(!res.ok) throw new Error(await res.text());
+      return true;
+    }catch(e){ console.error(e); showToast('Supabaseへの保存に失敗しました'); return false; }
+  }
+  return saveList(`watch:${patientId}`, [{ ...data, updatedAt }]);
+}
+
+/* ---------------- navigation / auth ---------------- */
+async function login(role){
+  const name = document.getElementById('loginName').value.trim();
+  if(!name){ showToast('お名前を入力してください'); return; }
+
+  await ensurePatientsLoaded();
+
+  if(role === 'family'){
+    const code = document.getElementById('loginPatientId').value.trim().toUpperCase();
+    if(!code){ showToast('患者IDを入力してください（看護師から伝えられたID）'); return; }
+    const found = patients.find(p => p.familyCode === code);
+    if(!found){ showToast('該当する患者IDが見つかりません。IDをご確認ください'); return; }
+    currentUser = { name, role };
+    currentFamilyPatient = found;
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('familyWelcome').textContent = `${name} さんとしてログイン中`;
+    document.getElementById('screen-family').classList.add('active');
+    document.getElementById('familyPatientName').textContent = `${found.name} さん（${found.age}歳）`;
+    document.getElementById('familyPatientMeta').textContent = `${found.room}号室に入院中／診断名：${found.diag}`;
+    initFamilyScreen();
+  } else {
+    currentUser = { name, role };
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('nurseWelcome').textContent = `${name} さんとしてログイン中`;
+    document.getElementById('screen-nurse').classList.add('active');
+    if(patients.length > 0) currentPatientId = patients[0].id;
+    renderPatientList();
+    if(currentPatientId) renderPatient(currentPatientId);
+  }
+}
+function logout(){
+  currentUser = null;
+  currentFamilyPatient = null;
+  if(familyPollTimer){ clearInterval(familyPollTimer); familyPollTimer = null; }
+  if(nursePollTimer){ clearInterval(nursePollTimer); nursePollTimer = null; }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('loginName').value = '';
+  document.getElementById('loginPatientId').value = '';
+}
+
+/* ---------------- nurse: 新規患者登録 ---------------- */
+function toggleAddPatientForm(){
+  const form = document.getElementById('addPatientForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+async function addPatient(){
+  const name = document.getElementById('npName').value.trim();
+  const room = document.getElementById('npRoom').value.trim();
+  const age = document.getElementById('npAge').value.trim();
+  const sex = document.getElementById('npSex').value;
+  const diag = document.getElementById('npDiag').value.trim();
+  const allergy = document.getElementById('npAllergy').value.trim() || 'なし';
+  if(!name || !room || !age || !diag){ showToast('氏名・部屋番号・年齢・診断名は必須です'); return; }
+
+  const code = generateFamilyCode();
+  const today = new Date();
+  const admitted = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
+  const newPatient = {
+    id: Date.now(),
+    name, room, age:Number(age), sex, diag, allergy,
+    admitted, flag:'low', issues:[], rawNotes:'', aiSummary:'',
+    familyCode: code
+  };
+  const ok = await createPatient(newPatient);
+  if(!ok) return;
+
+  patients.push(newPatient);
+  ['npName','npRoom','npAge','npDiag','npAllergy'].forEach(id=> document.getElementById(id).value = '');
+  toggleAddPatientForm();
+  renderPatientList();
+  renderPatient(newPatient.id);
+  alert(`患者「${name}」を登録しました。\n\n家族用ログインID：${code}\n\nこのIDをご家族にお伝えください。ログイン画面の「患者ID」欄に入力するとご覧いただけます。`);
+}
+
+/* ---------------- nurse: patient list ---------------- */
+function renderPatientList(){
+  const label = document.getElementById('patientCountLabel');
+  if(label) label.textContent = `担当患者 ／ ${patients.length}名`;
+
+  const list = document.getElementById('patientList');
+  const q = (document.getElementById('patientSearch')?.value || '').trim();
+  const filtered = q ? patients.filter(p => p.name.includes(q)) : patients;
+  if(patients.length === 0){
+    list.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft); padding:16px 8px;">まだ患者が登録されていません。<br>「＋ 新規患者を登録」から追加してください。</div>`;
+    return;
+  }
+  if(filtered.length === 0){
+    list.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft); padding:16px 8px;">該当する患者が見つかりません</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(p => `
+    <div class="patient-item ${p.id===currentPatientId?'active':''}" onclick="renderPatient(${p.id})">
+      <div class="avatar">${p.name[0]}</div>
+      <div class="meta">
+        <div class="name">${p.name}</div>
+        <div class="room">${p.room}号室・${p.age}歳・ID:${p.familyCode}</div>
+      </div>
+      <div class="flag ${p.flag}"></div>
+    </div>
+  `).join('');
+}
+
+/* ---------------- nurse: patient detail ---------------- */
+async function renderPatient(id){
+  currentPatientId = id;
+  if(nursePollTimer){ clearInterval(nursePollTimer); nursePollTimer = null; }
+  renderPatientList();
+  const p = patients.find(x=>x.id===id);
+  if(!p) return;
+  const main = document.getElementById('nurseMain');
+  main.innerHTML = `
+    <div class="card">
+      <div class="profile-top">
+        <div class="avatar" style="background:var(--nurse-deep)">${p.name[0]}</div>
+        <div>
+          <div class="pname">${p.name}　様</div>
+          <div class="psub">${p.room}号室・${p.age}歳・${p.sex}／入院日 ${p.admitted}</div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><div class="k">診断名</div><div class="v">${p.diag}</div></div>
+        <div class="field"><div class="k">アレルギー</div><div class="v">${p.allergy}</div></div>
+      </div>
+      <div class="chips">
+        ${p.issues.map(i => `<span class="chip ${i.includes('要注意')||i.includes('リスク')?'warn':''}">${i}</span>`).join('')}
+        <span class="id-badge">家族用ID：${p.familyCode}</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">●</span> カルテ・記録メモ</h3>
+      <textarea class="notes" id="notesArea">${p.rawNotes}</textarea>
+      <button class="ai-btn" id="aiBtn" onclick="runAI(${p.id})">
+        <span class="spin"></span>
+        ✨ AIで要約する
+      </button>
+      <div class="ai-summary" id="aiSummaryBox">
+        <span class="tag">AI要約結果</span>
+        <span id="aiSummaryText"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📝 かんたん記録追加（保存すると家族画面にも反映されます）</h3>
+      <div class="log-form">
+        <div class="log-row">
+          <select id="logCategory">
+            <option>バイタル</option>
+            <option>食事</option>
+            <option>リハビリ</option>
+            <option>本人・家族の様子</option>
+            <option>その他</option>
+          </select>
+          <input type="text" id="logTime" value="${nowTimeStr()}" style="width:90px;">
+        </div>
+        <input type="text" id="logMemo" placeholder="例：食事8割摂取、笑顔あり" style="border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; background:var(--bg);">
+        <button class="save-btn" id="saveLogBtn" onclick="addLog(${p.id})">記録を保存</button>
+      </div>
+      <div class="loglist" id="logList">
+        <div style="font-size:12.5px; color:var(--ink-soft);">読み込み中…</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>💬 家族とのメッセージ</h3>
+      <div class="chat nurse-chat" id="nurseChatBox" style="max-height:220px;">
+        <div style="font-size:12.5px; color:var(--ink-soft);">読み込み中…</div>
+      </div>
+      <div class="chat-input">
+        <input id="nurseChatInput" type="text" placeholder="家族へメッセージを送る…" onkeydown="if(event.key==='Enter') sendNurseMsg(${p.id})">
+        <button class="chat-send" onclick="sendNurseMsg(${p.id})">送信</button>
+      </div>
+    </div>
+  `;
+  const records = await getRecords(id);
+  renderLogList(records);
+  await refreshNurseChat(id);
+  nursePollTimer = setInterval(()=> refreshNurseChat(id), 8000);
+}
+
+function renderLogList(records){
+  const listEl = document.getElementById('logList');
+  if(!listEl) return;
+  if(records.length === 0){
+    listEl.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft);">まだ記録がありません</div>`;
+    return;
+  }
+  listEl.innerHTML = records.map(r => `
+    <div class="logitem"><span class="t">${r.time}</span><span>【${r.category}】${escapeHtml(r.memo)}　<span style="color:var(--ink-soft);">(${escapeHtml(r.author||'')})</span></span></div>
+  `).join('');
+}
+
+function runAI(id){
+  const p = patients.find(x=>x.id===id);
+  const btn = document.getElementById('aiBtn');
+  const box = document.getElementById('aiSummaryBox');
+  const text = document.getElementById('aiSummaryText');
+  const notes = document.getElementById('notesArea').value.trim();
+  if(!notes){ showToast('カルテ・記録メモを入力してください'); return; }
+  btn.classList.add('loading');
+  btn.disabled = true;
+  box.classList.remove('show');
+  text.textContent = '';
+  setTimeout(async ()=>{
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    box.classList.add('show');
+    const summary = p.aiSummary && notes === p.rawNotes ? p.aiSummary : notes;
+    typeText(text, summary);
+    const ok = await saveAiSummary(id, summary);
+    if(ok) showToast('AI要約を保存しました（家族画面にも反映されます）');
+  }, 1100);
+}
+
+function typeText(el, full){
+  let i = 0;
+  const speed = 18;
+  clearInterval(el._typeTimer);
+  el._typeTimer = setInterval(()=>{
+    i += 2;
+    el.textContent = full.slice(0, i);
+    if(i >= full.length){ clearInterval(el._typeTimer); }
+  }, speed);
+}
+
+async function addLog(id){
+  const cat = document.getElementById('logCategory').value;
+  const time = document.getElementById('logTime').value || nowTimeStr();
+  const memoInput = document.getElementById('logMemo');
+  const memo = memoInput.value.trim();
+  if(!memo){ showToast('メモを入力してください'); return; }
+
+  const btn = document.getElementById('saveLogBtn');
+  btn.disabled = true;
+  btn.textContent = '保存中…';
+
+  const entry = { time, category:cat, memo, author: currentUser ? currentUser.name : '看護師' };
+  const ok = await addRecord(id, entry);
+
+  btn.disabled = false;
+  btn.textContent = '記録を保存';
+
+  if(ok){
+    const records = await getRecords(id);
+    renderLogList(records);
+    memoInput.value = '';
+    showToast('記録を保存しました');
+  }
+}
+
+/* ---------------- nurse: chat（家族とのメッセージ） ---------------- */
+async function refreshNurseChat(patientId){
+  const chat = document.getElementById('nurseChatBox');
+  if(!chat) return;
+  const msgs = await getChatMessages(patientId);
+  if(msgs.length === 0){
+    chat.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft);">まだメッセージがありません</div>`;
+    return;
+  }
+  chat.innerHTML = msgs.map(m => `
+    <div class="msg ${m.who==='nurse' ? 'me' : 'them'}">
+      <span class="who">${escapeHtml(m.name)}</span>${escapeHtml(m.text)}
+    </div>
+  `).join('');
+  chat.scrollTop = chat.scrollHeight;
+}
+async function sendNurseMsg(patientId){
+  const input = document.getElementById('nurseChatInput');
+  const val = input.value.trim();
+  if(!val) return;
+  input.value = '';
+  const msg = { who:'nurse', name: currentUser ? currentUser.name : '看護師', text: val, time: nowTimeStr() };
+  await addChatMessage(patientId, msg);
+  await refreshNurseChat(patientId);
+}
+
+/* ---------------- family: init & records ---------------- */
+async function initFamilyScreen(){
+  const id = currentFamilyPatient.id;
+  await refreshAiSummary();
+  await refreshFamilyRecords();
+  await refreshChat();
+  await refreshWatchStatus();
+  if(familyPollTimer) clearInterval(familyPollTimer);
+  familyPollTimer = setInterval(async ()=>{
+    await refreshAiSummary();
+    await refreshFamilyRecords();
+    await refreshChat();
+    await refreshWatchStatus();
+  }, 8000);
+}
+
+async function refreshAiSummary(){
+  const box = document.getElementById('familyAiSummaryBox');
+  if(!box || !currentFamilyPatient) return;
+  const data = await getAiSummary(currentFamilyPatient.id);
+  if(!data){
+    box.innerHTML = `<span class="tag">AI要約・未生成</span>看護師が記録を要約すると、ここに最新の様子が表示されます。`;
+    return;
+  }
+  const t = new Date(data.updatedAt);
+  const tstr = isNaN(t) ? '' : `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}更新`;
+  box.innerHTML = `<span class="tag">AI要約・本日 ${tstr}</span>${escapeHtml(data.summary)}`;
+}
+
+async function refreshFamilyRecords(){
+  const listEl = document.getElementById('familyRecordList');
+  if(!listEl || !currentFamilyPatient) return;
+  const records = await getRecords(currentFamilyPatient.id);
+  if(records.length === 0){
+    listEl.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft);">まだ記録がありません</div>`;
+    return;
+  }
+  listEl.innerHTML = records.slice(0,5).map(r => `
+    <div class="logitem"><span class="t">${r.time}</span><span>【${r.category}】${escapeHtml(r.memo)}</span></div>
+  `).join('');
+}
+
+/* ---------------- family: 見守り状況 ---------------- */
+function toggleWatchForm(){
+  const form = document.getElementById('watchStatusForm');
+  const isShown = form.classList.contains('show');
+  if(isShown){ form.classList.remove('show'); }
+  else{ form.classList.add('show'); }
+}
+async function refreshWatchStatus(){
+  const view = document.getElementById('watchStatusView');
+  if(!view || !currentFamilyPatient) return;
+  const data = await getWatchStatus(currentFamilyPatient.id);
+  if(!data){
+    view.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft);">まだ見守り状況が入力されていません。「編集」から入力してください。</div>`;
+    return;
+  }
+  view.innerHTML = `
+    <div class="status-row"><span class="k">最終起動</span><span class="v badge-ok">${escapeHtml(data.lastActive||'—')}</span></div>
+    <div class="status-row"><span class="k">充電状況</span><span class="v badge-ok">${escapeHtml(data.battery||'—')}</span></div>
+    <div class="status-row"><span class="k">今日の気分チェック</span><span class="v badge-ok">${escapeHtml(data.mood||'—')}</span></div>
+  `;
+}
+async function saveWatchStatus(){
+  if(!currentFamilyPatient) return;
+  const lastActive = document.getElementById('wLastActive').value.trim();
+  const battery = document.getElementById('wBattery').value.trim();
+  const mood = document.getElementById('wMood').value;
+  if(!lastActive || !battery){ showToast('最終起動と充電状況を入力してください'); return; }
+  const ok = await saveWatchStatusData(currentFamilyPatient.id, { lastActive, battery, mood });
+  if(ok){
+    showToast('見守り状況を保存しました');
+    document.getElementById('watchStatusForm').classList.remove('show');
+    refreshWatchStatus();
+  }
+}
+
+/* ---------------- family: chat ---------------- */
+async function refreshChat(){
+  const chat = document.getElementById('chatBox');
+  if(!chat || !currentFamilyPatient) return;
+  const msgs = await getChatMessages(currentFamilyPatient.id);
+  if(msgs.length === 0){
+    chat.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft);">まだメッセージがありません</div>`;
+    return;
+  }
+  chat.innerHTML = msgs.map(m => `
+    <div class="msg ${m.who==='family' ? 'me' : 'them'}">
+      <span class="who">${escapeHtml(m.name)}</span>${escapeHtml(m.text)}
+    </div>
+  `).join('');
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendMsg(){
+  const input = document.getElementById('chatInput');
+  const val = input.value.trim();
+  if(!val) return;
+  input.value = '';
+  await appendMsg(val);
+}
+async function sendStamp(text){
+  await appendMsg(text);
+}
+async function appendMsg(val){
+  if(!currentFamilyPatient) return;
+  const msg = { who:'family', name: currentUser ? currentUser.name : '家族', text: val, time: nowTimeStr() };
+  await addChatMessage(currentFamilyPatient.id, msg);
+  await refreshChat();
+}
+
+/* ---------------- family: video call modal ---------------- */
+let callInterval = null;
+function openCall(){
+  const overlay = document.getElementById('callOverlay');
+  const avatar = overlay.querySelector('.big-avatar');
+  const nameEl = overlay.querySelector('.name');
+  if(currentFamilyPatient){
+    avatar.textContent = currentFamilyPatient.name[0];
+    nameEl.textContent = `${currentFamilyPatient.name} さん`;
+  }
+  overlay.classList.add('show');
+  let seconds = 0;
+  const timerEl = document.getElementById('callTimer');
+  timerEl.textContent = '00:00';
+  callInterval = setInterval(()=>{
+    seconds++;
+    const m = String(Math.floor(seconds/60)).padStart(2,'0');
+    const s = String(seconds%60).padStart(2,'0');
+    timerEl.textContent = `${m}:${s}`;
+  }, 1000);
+}
+function closeCall(){
+  document.getElementById('callOverlay').classList.remove('show');
+  clearInterval(callInterval);
+}
+
+/* ---------------- toast ---------------- */
+let toastTimeout;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* ---------------- 初期化 ---------------- */
+document.addEventListener('DOMContentLoaded', ensurePatientsLoaded);
+</script>
+</body>
+</html>
