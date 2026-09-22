@@ -176,12 +176,13 @@
     flex:1 1 auto; display:flex; flex-direction:column; min-height:120px;
   }
   .sidebar-schedule .label{ padding-bottom:8px; }
-  .schedule-add-row{ display:flex; gap:6px; margin-bottom:10px; }
+  .schedule-add-row{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
   .schedule-add-row input{
-    flex:1; min-width:0; border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:13px; background:var(--bg);
+    flex:1 1 90px; min-width:0; border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:13px; background:var(--bg);
   }
+  .schedule-add-row .schedule-tilde{ font-size:12px; color:var(--ink-soft); flex:0 0 auto; }
   .schedule-add-row button{
-    background:var(--nurse); color:#fff; font-size:12.5px; font-weight:500; padding:0 12px; border-radius:8px;
+    flex:1 1 100%; background:var(--nurse); color:#fff; font-size:12.5px; font-weight:500; padding:8px 12px; border-radius:8px;
   }
   .schedule-slot-list{ overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
   .schedule-slot{
@@ -505,10 +506,12 @@
         </div>
 
         <div class="sidebar-schedule">
-          <div class="label">📅 本日の面談予約タイムスケジュール</div>
+          <div class="label">📅 本日の面談可能時間帯（家族へ提案）</div>
           <div class="schedule-add-row">
-            <input type="time" id="scheduleTimeInput">
-            <button type="button" onclick="addScheduleSlot()">＋ 時間を追加</button>
+            <input type="time" id="scheduleStartInput">
+            <span class="schedule-tilde">〜</span>
+            <input type="time" id="scheduleEndInput">
+            <button type="button" onclick="addScheduleSlot()">＋ 提案する</button>
           </div>
           <div class="schedule-slot-list" id="scheduleSlotList"></div>
         </div>
@@ -1095,6 +1098,11 @@ async function addPatient(){
 }
 
 /* ---------------- nurse: patient list ---------------- */
+function nextApptTime(appts){
+  if(!appts || appts.length === 0) return '';
+  const sorted = [...appts].sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+  return sorted[0].time;
+}
 function renderPatientList(){
   const label = document.getElementById('patientCountLabel');
   if(label) label.textContent = `担当患者 ／ ${patients.length}名`;
@@ -1119,7 +1127,7 @@ function renderPatientList(){
         <div class="name">${p.name}</div>
         <div class="room">${p.room}号室・${p.age}歳・ID:${p.familyCode}</div>
       </div>
-      ${ (appointmentsIndex[p.id] && appointmentsIndex[p.id].length > 0) ? `<span class="appt-badge" title="面談予約リクエストあり（${appointmentsIndex[p.id].length}件）">📅</span>` : '' }
+      ${ (appointmentsIndex[p.id] && appointmentsIndex[p.id].length > 0) ? `<span class="appt-badge" title="面談予約リクエストあり（${appointmentsIndex[p.id].length}件）">📅 ${escapeHtml(nextApptTime(appointmentsIndex[p.id]))}</span>` : '' }
       <div class="flag ${p.flag}"></div>
     </div>
   `).join('');
@@ -1188,16 +1196,20 @@ async function getAppointmentsForDate(dateStr){
   return all;
 }
 async function addScheduleSlot(){
-  const input = document.getElementById('scheduleTimeInput');
-  const time = input.value;
-  if(!time){ showToast('時間を選択してください'); return; }
+  const startInput = document.getElementById('scheduleStartInput');
+  const endInput = document.getElementById('scheduleEndInput');
+  const start = startInput.value;
+  const end = endInput.value;
+  if(!start || !end){ showToast('開始と終了の時間を選択してください'); return; }
+  if(start >= end){ showToast('終了時間は開始時間より後にしてください'); return; }
+  const label = `${start}〜${end}`;
   const date = todayISO();
   const slots = await getScheduleSlots(date);
-  if(slots.includes(time)){ showToast('その時間はすでに追加されています'); return; }
-  slots.push(time);
+  if(slots.includes(label)){ showToast('その時間帯はすでに追加されています'); return; }
+  slots.push(label);
   slots.sort();
   const ok = await saveScheduleSlots(date, slots);
-  if(ok) input.value = '';
+  if(ok){ startInput.value = ''; endInput.value = ''; }
   await renderScheduleSlots();
 }
 async function removeScheduleSlot(time){
@@ -1212,7 +1224,7 @@ async function renderScheduleSlots(){
   const date = todayISO();
   const slots = await getScheduleSlots(date);
   if(slots.length === 0){
-    el.innerHTML = `<div style="font-size:12px; color:var(--ink-soft);">面談枠が未登録です。時間を追加してください</div>`;
+    el.innerHTML = `<div style="font-size:12px; color:var(--ink-soft);">面談できる時間帯が未登録です。時間帯を追加してください</div>`;
     return;
   }
   const booked = await getAppointmentsForDate(date);
