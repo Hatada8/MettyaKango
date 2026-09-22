@@ -148,7 +148,7 @@
   .sidebar-search-row select{
     border:1px solid var(--line); border-radius:9px; padding:9px 8px; font-size:13px; background:var(--bg);
   }
-  #patientListWrap{ flex:0 0 auto; overflow-y:auto; }
+  #patientListWrap{ flex:0 0 auto; max-height:340px; overflow-y:auto; }
   .patient-item{
     display:flex; align-items:center; gap:12px;
     padding:12px 10px; border-radius:12px; cursor:pointer; margin-bottom:4px;
@@ -176,6 +176,13 @@
     flex:1 1 auto; display:flex; flex-direction:column; min-height:120px;
   }
   .sidebar-schedule .label{ padding-bottom:8px; }
+  .timetable-capacity-row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:12px; color:var(--ink-soft); }
+  .timetable-capacity-row input{
+    width:52px; border:1px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px; background:var(--bg); text-align:center;
+  }
+  .timetable-capacity-row button{
+    background:var(--nurse); color:#fff; font-size:12px; font-weight:500; padding:6px 12px; border-radius:8px;
+  }
   .schedule-add-row{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
   .schedule-add-row input{
     flex:1 1 90px; min-width:0; border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:13px; background:var(--bg);
@@ -184,17 +191,24 @@
   .schedule-add-row button{
     flex:1 1 100%; background:var(--nurse); color:#fff; font-size:12.5px; font-weight:500; padding:8px 12px; border-radius:8px;
   }
-  .schedule-slot-list{ overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
-  .schedule-slot{
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-    font-size:12.5px; padding:8px 10px; border-radius:8px; background:var(--bg);
+  .timetable{
+    max-height:320px; overflow-y:auto; border:1px solid var(--line); border-radius:10px;
   }
-  .schedule-slot.booked{ background:var(--nurse-soft); color:var(--nurse-deep); }
-  .schedule-slot .slot-time{ font-family:'JetBrains Mono', monospace; font-weight:500; }
-  .schedule-slot .slot-status{ font-size:11px; color:var(--ink-soft); }
-  .schedule-slot.booked .slot-status{ color:var(--nurse-deep); }
-  .schedule-slot .slot-remove{ cursor:pointer; color:var(--ink-soft); font-size:13px; }
-  .schedule-slot .slot-remove:hover{ color:var(--family-deep); }
+  .timetable-row{
+    display:flex; align-items:center; gap:6px; padding:3px 8px; border-bottom:1px solid var(--line);
+    font-size:11.5px; min-height:24px; cursor:pointer;
+  }
+  .timetable-row:last-child{ border-bottom:none; }
+  .timetable-row:hover{ background:var(--bg); }
+  .timetable-row.available{ background:var(--nurse-soft); }
+  .timetable-row.full{ cursor:default; }
+  .timetable-time{ flex:0 0 38px; font-family:'JetBrains Mono', monospace; color:var(--ink-soft); }
+  .timetable-bars{ flex:1; display:flex; align-items:center; gap:4px; flex-wrap:wrap; min-width:0; }
+  .timetable-bar{
+    background:var(--nurse-deep); color:#fff; font-size:11px; padding:2px 8px; border-radius:6px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px;
+  }
+  .timetable-empty-hint{ font-size:10.5px; color:var(--ink-soft); opacity:.65; }
 
   .main{ padding:28px 32px 60px; max-width:920px; }
 
@@ -506,14 +520,19 @@
         </div>
 
         <div class="sidebar-schedule">
-          <div class="label">📅 本日の面談可能時間帯（家族へ提案）</div>
-          <div class="schedule-add-row">
-            <input type="time" id="scheduleStartInput">
-            <span class="schedule-tilde">〜</span>
-            <input type="time" id="scheduleEndInput">
-            <button type="button" onclick="addScheduleSlot()">＋ 提案する</button>
+          <div class="label">📅 本日の面談タイムテーブル</div>
+          <div class="timetable-capacity-row">
+            <span>同時面談可能人数</span>
+            <input type="number" id="scheduleCapacityInput" min="1" max="20" value="1">
+            <button type="button" onclick="saveScheduleCapacity()">設定</button>
           </div>
-          <div class="schedule-slot-list" id="scheduleSlotList"></div>
+          <div class="schedule-add-row">
+            <input type="time" id="scheduleStartInput" step="1800">
+            <span class="schedule-tilde">〜</span>
+            <input type="time" id="scheduleEndInput" step="1800">
+            <button type="button" onclick="addScheduleSlot()">＋ 時間帯を空きにする</button>
+          </div>
+          <div class="timetable" id="scheduleTimetable"></div>
         </div>
       </div>
       <div class="main" id="nurseMain"></div>
@@ -1038,13 +1057,13 @@ async function enterNurseScreen(name){
   if(patients.length > 0) currentPatientId = patients[0].id;
   await refreshAppointmentsIndex();
   renderPatientList();
-  renderScheduleSlots();
+  renderScheduleTimetable(true);
   if(currentPatientId) renderPatient(currentPatientId);
   if(nurseListPollTimer) clearInterval(nurseListPollTimer);
   nurseListPollTimer = setInterval(async ()=>{
     await refreshAppointmentsIndex();
     renderPatientList();
-    renderScheduleSlots();
+    renderScheduleTimetable(false);
   }, 10000);
 }
 
@@ -1141,43 +1160,56 @@ async function refreshAppointmentsIndex(){
   appointmentsIndex = idx;
 }
 
-/* ---------------- nurse: 本日の面談予約タイムスケジュール ---------------- */
+/* ---------------- nurse: 本日の面談タイムテーブル ---------------- */
 function todayISO(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 const SCHEDULE_SLOT_SENTINEL_ID = 0; // watch_status の患者IDには使われない予約枠専用の番号
-async function getScheduleSlots(dateStr){
+const HALF_HOUR_SLOTS = Array.from({length:48}, (_,i) => {
+  const h = Math.floor(i/2), m = (i%2)*30;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+});
+function snapToHalfHour(time){
+  const [h, m] = time.split(':').map(Number);
+  return `${String(h).padStart(2,'0')}:${m >= 30 ? '30' : '00'}`;
+}
+async function getScheduleRow(dateStr){
   if(useSupabase){
     try{
       const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?patient_id=eq.${SCHEDULE_SLOT_SENTINEL_ID}`, { headers: sbHeaders() });
       if(!res.ok) throw new Error(await res.text());
       const rows = await res.json();
       if(rows[0] && rows[0].last_active === dateStr){
-        try{ return JSON.parse(rows[0].mood || '[]'); }catch(e){ return []; }
+        let slots = [];
+        try{ slots = JSON.parse(rows[0].mood || '[]'); }catch(e){ slots = []; }
+        return { slots, capacity: parseInt(rows[0].battery, 10) || 1 };
       }
-      return [];
-    }catch(e){ console.error(e); return []; }
+      return { slots:[], capacity:1 };
+    }catch(e){ console.error(e); return { slots:[], capacity:1 }; }
   }
   try{
-    const raw = localStorage.getItem(`scheduleSlots_${dateStr}`);
-    return raw ? JSON.parse(raw) : [];
-  }catch(e){ return []; }
+    const raw = localStorage.getItem(`scheduleRow_${dateStr}`);
+    return raw ? JSON.parse(raw) : { slots:[], capacity:1 };
+  }catch(e){ return { slots:[], capacity:1 }; }
 }
-async function saveScheduleSlots(dateStr, slots){
+async function saveScheduleRow(dateStr, row){
   if(useSupabase){
     try{
       const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?on_conflict=patient_id`, {
         method: "POST",
         headers: sbHeaders({ "Prefer": "resolution=merge-duplicates" }),
-        body: JSON.stringify([{ patient_id:SCHEDULE_SLOT_SENTINEL_ID, last_active:dateStr, battery:'', mood:JSON.stringify(slots) }])
+        body: JSON.stringify([{ patient_id:SCHEDULE_SLOT_SENTINEL_ID, last_active:dateStr, battery:String(row.capacity), mood:JSON.stringify(row.slots) }])
       });
       if(!res.ok) throw new Error(await res.text());
       return true;
     }catch(e){ console.error(e); showToast('面談枠の保存に失敗しました'); return false; }
   }
-  localStorage.setItem(`scheduleSlots_${dateStr}`, JSON.stringify(slots));
+  localStorage.setItem(`scheduleRow_${dateStr}`, JSON.stringify(row));
   return true;
+}
+async function getScheduleSlots(dateStr){
+  return (await getScheduleRow(dateStr)).slots;
 }
 async function getAppointmentsForDate(dateStr){
   if(useSupabase){
@@ -1185,13 +1217,13 @@ async function getAppointmentsForDate(dateStr){
       const res = await fetch(`${SUPABASE_URL}/rest/v1/appointments?date=eq.${dateStr}`, { headers: sbHeaders() });
       if(!res.ok) throw new Error(await res.text());
       const rows = await res.json();
-      return rows.map(r => ({ time:r.time }));
+      return rows.map(r => ({ time:r.time, patientId:r.patient_id }));
     }catch(e){ console.error(e); return []; }
   }
   const all = [];
   for(const p of patients){
     const list = await getAppointments(p.id);
-    all.push(...list.filter(a => a.date === dateStr));
+    all.push(...list.filter(a => a.date === dateStr).map(a => ({ ...a, patientId:p.id })));
   }
   return all;
 }
@@ -1201,41 +1233,87 @@ async function addScheduleSlot(){
   const start = startInput.value;
   const end = endInput.value;
   if(!start || !end){ showToast('開始と終了の時間を選択してください'); return; }
-  if(start >= end){ showToast('終了時間は開始時間より後にしてください'); return; }
-  const label = `${start}〜${end}`;
+  const startSnap = snapToHalfHour(start);
+  const endSnap = snapToHalfHour(end);
+  if(startSnap >= endSnap){ showToast('終了時間は開始時間より後にしてください（30分単位）'); return; }
   const date = todayISO();
-  const slots = await getScheduleSlots(date);
-  if(slots.includes(label)){ showToast('その時間帯はすでに追加されています'); return; }
-  slots.push(label);
-  slots.sort();
-  const ok = await saveScheduleSlots(date, slots);
+  const row = await getScheduleRow(date);
+  const range = HALF_HOUR_SLOTS.filter(t => t >= startSnap && t < endSnap);
+  row.slots = Array.from(new Set([...row.slots, ...range])).sort();
+  const ok = await saveScheduleRow(date, row);
   if(ok){ startInput.value = ''; endInput.value = ''; }
-  await renderScheduleSlots();
+  await renderScheduleTimetable();
 }
 async function removeScheduleSlot(time){
   const date = todayISO();
-  const slots = (await getScheduleSlots(date)).filter(t => t !== time);
-  await saveScheduleSlots(date, slots);
-  await renderScheduleSlots();
+  const row = await getScheduleRow(date);
+  row.slots = row.slots.filter(t => t !== time);
+  await saveScheduleRow(date, row);
+  await renderScheduleTimetable();
 }
-async function renderScheduleSlots(){
-  const el = document.getElementById('scheduleSlotList');
-  if(!el) return;
-  const date = todayISO();
-  const slots = await getScheduleSlots(date);
-  if(slots.length === 0){
-    el.innerHTML = `<div style="font-size:12px; color:var(--ink-soft);">面談できる時間帯が未登録です。時間帯を追加してください</div>`;
+async function toggleScheduleSlot(time, isAvailable){
+  if(isAvailable){
+    await removeScheduleSlot(time);
     return;
   }
-  const booked = await getAppointmentsForDate(date);
-  const bookedTimes = new Set(booked.map(a => a.time));
-  el.innerHTML = slots.map(time => `
-    <div class="schedule-slot ${bookedTimes.has(time) ? 'booked' : ''}">
-      <span class="slot-time">${escapeHtml(time)}</span>
-      <span class="slot-status">${bookedTimes.has(time) ? '予約あり' : '空き'}</span>
-      <span class="slot-remove" onclick="removeScheduleSlot('${time}')" title="削除">×</span>
-    </div>
-  `).join('');
+  const date = todayISO();
+  const row = await getScheduleRow(date);
+  if(!row.slots.includes(time)){
+    row.slots.push(time);
+    row.slots.sort();
+    await saveScheduleRow(date, row);
+  }
+  await renderScheduleTimetable();
+}
+async function saveScheduleCapacity(){
+  const input = document.getElementById('scheduleCapacityInput');
+  const capacity = Math.max(1, parseInt(input.value, 10) || 1);
+  input.value = capacity;
+  const date = todayISO();
+  const row = await getScheduleRow(date);
+  row.capacity = capacity;
+  const ok = await saveScheduleRow(date, row);
+  if(ok) showToast('同時面談可能人数を更新しました');
+  await renderScheduleTimetable();
+}
+async function renderScheduleTimetable(scrollToDefault){
+  const el = document.getElementById('scheduleTimetable');
+  if(!el) return;
+  const date = todayISO();
+  const row = await getScheduleRow(date);
+  const capInput = document.getElementById('scheduleCapacityInput');
+  if(capInput && document.activeElement !== capInput) capInput.value = row.capacity;
+  const bookings = await getAppointmentsForDate(date);
+  const byTime = {};
+  bookings.forEach(b => { (byTime[b.time] = byTime[b.time] || []).push(b); });
+
+  el.innerHTML = HALF_HOUR_SLOTS.map(t => {
+    const isAvailable = row.slots.includes(t);
+    const bs = byTime[t] || [];
+    const isFull = isAvailable && bs.length >= row.capacity;
+    const bars = bs.map(b => {
+      const p = patients.find(x => x.id === b.patientId);
+      const label = p ? p.name : '患者';
+      return `<span class="timetable-bar" title="${escapeHtml(label)}">${escapeHtml(label)}</span>`;
+    }).join('');
+    const remaining = isAvailable ? Math.max(0, row.capacity - bs.length) : 0;
+    const hint = isAvailable
+      ? (remaining > 0 ? `<span class="timetable-empty-hint">空き${remaining}</span>` : '')
+      : (bs.length === 0 ? `<span class="timetable-empty-hint">クリックで空きに</span>` : '');
+    const rowClass = isAvailable ? (isFull ? 'full' : 'available') : '';
+    const clickable = bs.length === 0;
+    return `
+      <div class="timetable-row ${rowClass}" data-time="${t}" ${clickable ? `onclick="toggleScheduleSlot('${t}', ${isAvailable})"` : ''}>
+        <span class="timetable-time">${t}</span>
+        <span class="timetable-bars">${bars}${hint}</span>
+      </div>
+    `;
+  }).join('');
+
+  if(scrollToDefault){
+    const target = el.querySelector('[data-time="08:00"]');
+    if(target) el.scrollTop = target.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop;
+  }
 }
 
 /* ---------------- nurse: patient detail ---------------- */
@@ -1569,10 +1647,11 @@ async function refreshApptTimeOptions(){
   const dateInput = document.getElementById('apptDate');
   if(!sel || !dateInput) return;
   const date = dateInput.value || todayISO();
-  const allSlots = await getScheduleSlots(date);
+  const row = await getScheduleRow(date);
   const booked = await getAppointmentsForDate(date);
-  const bookedTimes = new Set(booked.map(a => a.time));
-  const available = allSlots.filter(t => !bookedTimes.has(t));
+  const countByTime = {};
+  booked.forEach(b => { countByTime[b.time] = (countByTime[b.time] || 0) + 1; });
+  const available = row.slots.filter(t => (countByTime[t] || 0) < row.capacity);
   if(available.length === 0){
     sel.innerHTML = `<option value="">対応可能な時間がありません</option>`;
     return;
