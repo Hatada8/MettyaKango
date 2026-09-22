@@ -176,6 +176,10 @@
     flex:1 1 auto; display:flex; flex-direction:column; min-height:120px;
   }
   .sidebar-schedule .label{ padding-bottom:8px; }
+  .timetable-date-row{ margin-bottom:8px; }
+  .timetable-date-row input{
+    width:100%; border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:13px; background:var(--bg);
+  }
   .timetable-capacity-row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:12px; color:var(--ink-soft); }
   .timetable-capacity-row input{
     width:52px; border:1px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px; background:var(--bg); text-align:center;
@@ -409,6 +413,11 @@
     border:1px solid #F1D9D0; margin-bottom:8px;
   }
   .appt-request-item .appt-when{ font-weight:700; color:var(--family-deep); margin-bottom:4px; }
+  .appt-cancel-btn{
+    flex:0 0 auto; background:transparent; color:var(--ink-soft); font-size:11px;
+    border:1px solid var(--line); padding:4px 10px; border-radius:7px;
+  }
+  .appt-cancel-btn:hover{ border-color:var(--family-deep); color:var(--family-deep); }
 
   /* ---------- toast ---------- */
   .toast{
@@ -520,7 +529,10 @@
         </div>
 
         <div class="sidebar-schedule">
-          <div class="label">📅 本日の面談タイムテーブル</div>
+          <div class="label">📅 面談タイムテーブル</div>
+          <div class="timetable-date-row">
+            <input type="date" id="scheduleDateInput" onchange="renderScheduleTimetable(true)">
+          </div>
           <div class="timetable-capacity-row">
             <span>同時面談可能人数</span>
             <input type="number" id="scheduleCapacityInput" min="1" max="20" value="1">
@@ -563,7 +575,7 @@
 
       <div class="card">
         <h3><span class="n">●</span> 今日の様子（看護師のAI要約より）
-          <button onclick="refreshAiSummary(); refreshChat(); refreshApptLog();" style="margin-left:auto; background:none; font-size:11.5px; color:var(--ink-soft); border:1px solid var(--line); padding:5px 10px; border-radius:8px;">更新</button>
+          <button onclick="refreshAiSummary(); refreshChat(); refreshApptLog(); refreshApptTimeOptions();" style="margin-left:auto; background:none; font-size:11.5px; color:var(--ink-soft); border:1px solid var(--line); padding:5px 10px; border-radius:8px;">更新</button>
         </h3>
         <div class="ai-summary show" style="margin-top:0;" id="familyAiSummaryBox">
           <span class="tag">読み込み中…</span>
@@ -712,7 +724,7 @@ async function saveList(key, arr){
 }
 
 /* ---------------- patients ---------------- */
-async function getPatients(){
+async function getPatients(silent){
   if(useSupabase){
     try{
       const res = await fetch(`${SUPABASE_URL}/rest/v1/patients?order=id.asc`, { headers: sbHeaders() });
@@ -723,7 +735,7 @@ async function getPatients(){
         admitted:r.admitted, flag:r.flag, issues:r.issues||[], rawNotes:r.raw_notes||'', aiSummary:r.ai_summary||'',
         familyCode:r.family_code
       }));
-    }catch(e){ console.error(e); showToast('Supabaseからの読み込みに失敗しました'); return []; }
+    }catch(e){ console.error(e); if(!silent) showToast('Supabaseからの読み込みに失敗しました'); return []; }
   }
   return loadList('patients_list');
 }
@@ -1055,12 +1067,19 @@ async function enterNurseScreen(name){
   document.getElementById('nurseWelcome').textContent = `${name} さんとしてログイン中`;
   document.getElementById('screen-nurse').classList.add('active');
   if(patients.length > 0) currentPatientId = patients[0].id;
+  const schedDate = document.getElementById('scheduleDateInput');
+  if(schedDate){
+    schedDate.min = todayISO();
+    if(!schedDate.value) schedDate.value = todayISO();
+  }
   await refreshAppointmentsIndex();
   renderPatientList();
   renderScheduleTimetable(true);
   if(currentPatientId) renderPatient(currentPatientId);
   if(nurseListPollTimer) clearInterval(nurseListPollTimer);
   nurseListPollTimer = setInterval(async ()=>{
+    const latest = await getPatients(true);
+    if(latest.length) patients = latest;
     await refreshAppointmentsIndex();
     renderPatientList();
     renderScheduleTimetable(false);
@@ -1117,10 +1136,13 @@ async function addPatient(){
 }
 
 /* ---------------- nurse: patient list ---------------- */
-function nextApptTime(appts){
-  if(!appts || appts.length === 0) return '';
-  const sorted = [...appts].sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
-  return sorted[0].time;
+/* これから先の予約だけを、近い順に返す（済んだ予約はバッジに出さない） */
+function upcomingAppts(appts){
+  if(!appts || appts.length === 0) return [];
+  const now = `${todayISO()} ${nowTimeStr()}`;
+  return appts
+    .filter(a => `${a.date} ${a.time}` >= now)
+    .sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
 }
 function renderPatientList(){
   const label = document.getElementById('patientCountLabel');
@@ -1139,20 +1161,37 @@ function renderPatientList(){
     list.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft); padding:16px 8px;">該当する患者が見つかりません</div>`;
     return;
   }
-  list.innerHTML = filtered.map(p => `
+  list.innerHTML = filtered.map(p => {
+    const up = upcomingAppts(appointmentsIndex[p.id]);
+    return `
     <div class="patient-item ${p.id===currentPatientId?'active':''}" onclick="renderPatient(${p.id})">
-      <div class="avatar">${p.name[0]}</div>
+      <div class="avatar">${escapeHtml(String(p.name||'？')[0])}</div>
       <div class="meta">
-        <div class="name">${p.name}</div>
-        <div class="room">${p.room}号室・${p.age}歳・ID:${p.familyCode}</div>
+        <div class="name">${escapeHtml(p.name)}</div>
+        <div class="room">${escapeHtml(p.room)}号室・${escapeHtml(p.age)}歳・ID:${escapeHtml(p.familyCode)}</div>
       </div>
-      ${ (appointmentsIndex[p.id] && appointmentsIndex[p.id].length > 0) ? `<span class="appt-badge" title="面談予約リクエストあり（${appointmentsIndex[p.id].length}件）">📅 ${escapeHtml(nextApptTime(appointmentsIndex[p.id]))}</span>` : '' }
+      ${ up.length > 0 ? `<span class="appt-badge" title="これからの面談予約 ${up.length}件">📅 ${escapeHtml(up[0].time)}</span>` : '' }
       <div class="flag ${p.flag}"></div>
     </div>
-  `).join('');
+  `;}).join('');
 }
 
 async function refreshAppointmentsIndex(){
+  if(useSupabase){
+    try{
+      // 患者ごとに問い合わせず、1回でまとめて取得する
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/appointments?order=created_at.desc`, { headers: sbHeaders() });
+      if(!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      const idx = {};
+      rows.forEach(r => {
+        const a = { id:r.id, template:r.template, date:r.date, time:r.time, note:r.note, requestedBy:r.requested_by, createdAt:r.created_at };
+        (idx[r.patient_id] = idx[r.patient_id] || []).push(a);
+      });
+      appointmentsIndex = idx;
+      return;
+    }catch(e){ console.error(e); }
+  }
   const idx = {};
   for(const p of patients){
     idx[p.id] = await getAppointments(p.id);
@@ -1174,42 +1213,63 @@ function snapToHalfHour(time){
   const [h, m] = time.split(':').map(Number);
   return `${String(h).padStart(2,'0')}:${m >= 30 ? '30' : '00'}`;
 }
-async function getScheduleRow(dateStr){
+/* 面談枠は「日付 -> { slots, capacity }」のマップとして1行にまとめて保存する。
+   旧形式（1日分の配列）で保存されていた場合は読み込み時に変換する。 */
+function parseScheduleMap(moodRaw, legacyDate, legacyCapacity){
+  let parsed;
+  try{ parsed = JSON.parse(moodRaw || '{}'); }catch(e){ return {}; }
+  if(Array.isArray(parsed)){
+    if(!legacyDate) return {};
+    return { [legacyDate]: { slots: parsed, capacity: parseInt(legacyCapacity, 10) || 1 } };
+  }
+  return (parsed && typeof parsed === 'object') ? parsed : {};
+}
+async function fetchScheduleMap(){
   if(useSupabase){
     try{
       const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?patient_id=eq.${SCHEDULE_SLOT_SENTINEL_ID}`, { headers: sbHeaders() });
       if(!res.ok) throw new Error(await res.text());
       const rows = await res.json();
-      if(rows[0] && rows[0].last_active === dateStr){
-        let slots = [];
-        try{ slots = JSON.parse(rows[0].mood || '[]'); }catch(e){ slots = []; }
-        return { slots, capacity: parseInt(rows[0].battery, 10) || 1 };
-      }
-      return { slots:[], capacity:1 };
-    }catch(e){ console.error(e); return { slots:[], capacity:1 }; }
+      if(!rows[0]) return {};
+      return parseScheduleMap(rows[0].mood, rows[0].last_active, rows[0].battery);
+    }catch(e){ console.error(e); return {}; }
   }
   try{
-    const raw = localStorage.getItem(`scheduleRow_${dateStr}`);
-    return raw ? JSON.parse(raw) : { slots:[], capacity:1 };
-  }catch(e){ return { slots:[], capacity:1 }; }
+    const raw = localStorage.getItem('scheduleMap');
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
 }
-async function saveScheduleRow(dateStr, row){
+async function saveScheduleMap(map){
+  const today = todayISO();
+  const pruned = {};
+  Object.keys(map).forEach(d => { if(d >= today) pruned[d] = map[d]; }); // 過ぎた日の枠は持ち越さない
   if(useSupabase){
     try{
       const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?on_conflict=patient_id`, {
         method: "POST",
         headers: sbHeaders({ "Prefer": "resolution=merge-duplicates" }),
-        body: JSON.stringify([{ patient_id:SCHEDULE_SLOT_SENTINEL_ID, last_active:dateStr, battery:String(row.capacity), mood:JSON.stringify(row.slots) }])
+        body: JSON.stringify([{ patient_id:SCHEDULE_SLOT_SENTINEL_ID, last_active:'multi', battery:'', mood:JSON.stringify(pruned) }])
       });
       if(!res.ok) throw new Error(await res.text());
       return true;
     }catch(e){ console.error(e); showToast('面談枠の保存に失敗しました'); return false; }
   }
-  localStorage.setItem(`scheduleRow_${dateStr}`, JSON.stringify(row));
+  localStorage.setItem('scheduleMap', JSON.stringify(pruned));
   return true;
 }
-async function getScheduleSlots(dateStr){
-  return (await getScheduleRow(dateStr)).slots;
+async function getScheduleRow(dateStr){
+  const map = await fetchScheduleMap();
+  const entry = map[dateStr];
+  return { slots: (entry && entry.slots) || [], capacity: (entry && entry.capacity) || 1 };
+}
+async function saveScheduleRow(dateStr, row){
+  const map = await fetchScheduleMap();
+  map[dateStr] = { slots: row.slots, capacity: row.capacity };
+  return saveScheduleMap(map);
+}
+function scheduleDate(){
+  const el = document.getElementById('scheduleDateInput');
+  return (el && el.value) || todayISO();
 }
 async function getAppointmentsForDate(dateStr){
   if(useSupabase){
@@ -1236,7 +1296,7 @@ async function addScheduleSlot(){
   const startSnap = snapToHalfHour(start);
   const endSnap = snapToHalfHour(end);
   if(startSnap >= endSnap){ showToast('終了時間は開始時間より後にしてください（30分単位）'); return; }
-  const date = todayISO();
+  const date = scheduleDate();
   const row = await getScheduleRow(date);
   const range = HALF_HOUR_SLOTS.filter(t => t >= startSnap && t < endSnap);
   row.slots = Array.from(new Set([...row.slots, ...range])).sort();
@@ -1245,7 +1305,7 @@ async function addScheduleSlot(){
   await renderScheduleTimetable();
 }
 async function removeScheduleSlot(time){
-  const date = todayISO();
+  const date = scheduleDate();
   const row = await getScheduleRow(date);
   row.slots = row.slots.filter(t => t !== time);
   await saveScheduleRow(date, row);
@@ -1256,7 +1316,7 @@ async function toggleScheduleSlot(time, isAvailable){
     await removeScheduleSlot(time);
     return;
   }
-  const date = todayISO();
+  const date = scheduleDate();
   const row = await getScheduleRow(date);
   if(!row.slots.includes(time)){
     row.slots.push(time);
@@ -1269,7 +1329,7 @@ async function saveScheduleCapacity(){
   const input = document.getElementById('scheduleCapacityInput');
   const capacity = Math.max(1, parseInt(input.value, 10) || 1);
   input.value = capacity;
-  const date = todayISO();
+  const date = scheduleDate();
   const row = await getScheduleRow(date);
   row.capacity = capacity;
   const ok = await saveScheduleRow(date, row);
@@ -1279,7 +1339,7 @@ async function saveScheduleCapacity(){
 async function renderScheduleTimetable(scrollToDefault){
   const el = document.getElementById('scheduleTimetable');
   if(!el) return;
-  const date = todayISO();
+  const date = scheduleDate();
   const row = await getScheduleRow(date);
   const capInput = document.getElementById('scheduleCapacityInput');
   if(capInput && document.activeElement !== capInput) capInput.value = row.capacity;
@@ -1329,20 +1389,20 @@ async function renderPatient(id){
     <div class="card">
       <div class="profile-top" style="justify-content:space-between;">
         <div style="display:flex; align-items:center; gap:16px;">
-          <div class="avatar" style="background:var(--nurse-deep)">${p.name[0]}</div>
+          <div class="avatar" style="background:var(--nurse-deep)">${escapeHtml(String(p.name||'？')[0])}</div>
           <div>
-            <div class="pname">${p.name}　様</div>
-            <div class="psub">${p.room}号室・${p.age}歳・${p.sex}／入院日 ${p.admitted}</div>
+            <div class="pname">${escapeHtml(p.name)}　様</div>
+            <div class="psub">${escapeHtml(p.room)}号室・${escapeHtml(p.age)}歳・${escapeHtml(p.sex)}／入院日 ${escapeHtml(p.admitted)}</div>
           </div>
         </div>
       </div>
       <div class="grid2">
-        <div class="field"><div class="k">診断名</div><div class="v">${p.diag}</div></div>
-        <div class="field"><div class="k">アレルギー</div><div class="v">${p.allergy}</div></div>
+        <div class="field"><div class="k">診断名</div><div class="v">${escapeHtml(p.diag)}</div></div>
+        <div class="field"><div class="k">アレルギー</div><div class="v">${escapeHtml(p.allergy)}</div></div>
       </div>
       <div class="chips" id="issuesChips">
-        ${p.issues.map(i => `<span class="chip ${i.includes('要注意')||i.includes('リスク')?'warn':''}">${escapeHtml(i)} <span class="chip-remove" onclick="removeIssue(${p.id}, '${i.replace(/'/g,"\\'")}')">×</span></span>`).join('')}
-        <span class="id-badge">家族用ID：${p.familyCode}</span>
+        ${p.issues.map((i, idx) => `<span class="chip ${i.includes('要注意')||i.includes('リスク')?'warn':''}">${escapeHtml(i)} <span class="chip-remove" onclick="removeIssueAt(${p.id}, ${idx})">×</span></span>`).join('')}
+        <span class="id-badge">家族用ID：${escapeHtml(p.familyCode)}</span>
       </div>
       <div class="issue-add-row">
         <select id="issuePreset">
@@ -1364,7 +1424,7 @@ async function renderPatient(id){
 
     <div class="card">
       <h3><span class="n">●</span> カルテ・記録メモ</h3>
-      <textarea class="notes" id="notesArea" placeholder="カルテの内容をここに貼り付け（コピペ）してください">${p.rawNotes}</textarea>
+      <textarea class="notes" id="notesArea" placeholder="カルテの内容をここに貼り付け（コピペ）してください">${escapeHtml(p.rawNotes)}</textarea>
 
       <div class="image-attach-row">
         <button type="button" class="attach-btn" onclick="document.getElementById('imageFileInput').click()">🖼️ 画像を選択</button>
@@ -1397,7 +1457,7 @@ async function renderPatient(id){
             <option>本人・家族の様子</option>
             <option>その他</option>
           </select>
-          <input type="text" id="logTime" value="${nowTimeStr()}" style="width:90px;">
+          <input type="time" id="logTime" value="${nowTimeStr()}" style="width:110px;">
         </div>
         <input type="text" id="logMemo" placeholder="例：食事8割摂取、笑顔あり" style="border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; background:var(--bg);">
         <button class="save-btn" id="saveLogBtn" type="button" onclick="addLog(${p.id})">記録を保存</button>
@@ -1428,12 +1488,12 @@ async function renderPatient(id){
   const records = await getRecords(id);
   renderLogList(records);
   const appts = await getAppointments(id);
-  renderApptRequestList(appts);
+  renderApptRequestList(appts, id);
   await refreshNurseChat(id);
   nursePollTimer = setInterval(async ()=>{
     await refreshNurseChat(id);
     const latestAppts = await getAppointments(id);
-    renderApptRequestList(latestAppts);
+    renderApptRequestList(latestAppts, id);
   }, 8000);
 }
 
@@ -1523,10 +1583,10 @@ async function addIssue(patientId){
     showToast('ステータスを追加しました');
   }
 }
-async function removeIssue(patientId, value){
+async function removeIssueAt(patientId, index){
   const p = patients.find(x=>x.id===patientId);
-  if(!p) return;
-  p.issues = p.issues.filter(i => i !== value);
+  if(!p || index < 0 || index >= p.issues.length) return;
+  p.issues = p.issues.filter((_, i) => i !== index);
   const ok = await updatePatient(p);
   if(ok){
     renderIssuesChips(p);
@@ -1536,9 +1596,9 @@ async function removeIssue(patientId, value){
 function renderIssuesChips(p){
   const el = document.getElementById('issuesChips');
   if(!el) return;
-  el.innerHTML = p.issues.map(i => `
-    <span class="chip ${i.includes('要注意')||i.includes('リスク')?'warn':''}">${escapeHtml(i)} <span class="chip-remove" onclick="removeIssue(${p.id}, '${i.replace(/'/g,"\\'")}')">×</span></span>
-  `).join('') + `<span class="id-badge">家族用ID：${p.familyCode}</span>`;
+  el.innerHTML = p.issues.map((i, idx) => `
+    <span class="chip ${i.includes('要注意')||i.includes('リスク')?'warn':''}">${escapeHtml(i)} <span class="chip-remove" onclick="removeIssueAt(${p.id}, ${idx})">×</span></span>
+  `).join('') + `<span class="id-badge">家族用ID：${escapeHtml(p.familyCode)}</span>`;
 }
 
 function typeText(el, full){
@@ -1561,7 +1621,7 @@ function renderLogList(records){
     return;
   }
   listEl.innerHTML = records.map(r => `
-    <div class="logitem"><span class="t">${r.time}</span><span>【${r.category}】${escapeHtml(r.memo)}　<span style="color:var(--ink-soft);">(${escapeHtml(r.author||'')})</span></span></div>
+    <div class="logitem"><span class="t">${escapeHtml(r.time)}</span><span>【${escapeHtml(r.category)}】${escapeHtml(r.memo)}　<span style="color:var(--ink-soft);">(${escapeHtml(r.author||'')})</span></span></div>
   `).join('');
 }
 
@@ -1597,10 +1657,48 @@ async function getAppointments(patientId){
       const res = await fetch(`${SUPABASE_URL}/rest/v1/appointments?patient_id=eq.${patientId}&order=created_at.desc`, { headers: sbHeaders() });
       if(!res.ok) throw new Error(await res.text());
       const rows = await res.json();
-      return rows.map(r => ({ template:r.template, date:r.date, time:r.time, note:r.note, requestedBy:r.requested_by, createdAt:r.created_at }));
+      return rows.map(r => ({ id:r.id, template:r.template, date:r.date, time:r.time, note:r.note, requestedBy:r.requested_by, createdAt:r.created_at }));
     }catch(e){ console.error(e); return []; }
   }
   return loadList(`appointments:${patientId}`);
+}
+
+/* 面談予約の取り消し（看護師・家族どちらからでも） */
+async function deleteAppointment(patientId, apptId, createdAt){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/appointments?id=eq.${encodeURIComponent(apptId)}`, {
+        method: "DELETE", headers: sbHeaders()
+      });
+      if(!res.ok) throw new Error(await res.text());
+      return true;
+    }catch(e){ console.error(e); showToast('予約の取り消しに失敗しました'); return false; }
+  }
+  const list = await loadList(`appointments:${patientId}`);
+  return saveList(`appointments:${patientId}`, list.filter(a => a.createdAt !== createdAt));
+}
+
+async function cancelAppointmentAsFamily(apptId, createdAt){
+  if(!currentFamilyPatient) return;
+  if(!confirm('この面談予約を取り消します。よろしいですか？')) return;
+  const ok = await deleteAppointment(currentFamilyPatient.id, apptId, createdAt);
+  if(ok){
+    showToast('面談予約を取り消しました');
+    await refreshApptLog();
+    await refreshApptTimeOptions();
+  }
+}
+
+async function cancelAppointmentAsNurse(patientId, apptId, createdAt){
+  if(!confirm('この面談予約を取り消します。よろしいですか？')) return;
+  const ok = await deleteAppointment(patientId, apptId, createdAt);
+  if(ok){
+    showToast('面談予約を取り消しました');
+    renderApptRequestList(await getAppointments(patientId));
+    await refreshAppointmentsIndex();
+    renderPatientList();
+    await renderScheduleTimetable(false);
+  }
 }
 async function addAppointment(patientId, appt){
   if(useSupabase){
@@ -1628,6 +1726,20 @@ async function submitAppointment(){
   const note = noteInput.value.trim();
   if(!date || !time){ showToast('希望日時を選択してください'); return; }
 
+  // 送信直前にもう一度空きを確認する（表示後に他の方が予約した場合の取りこぼしを防ぐ）
+  const row = await getScheduleRow(date);
+  if(!row.slots.includes(time)){
+    showToast('その時間は受付が終了しました。別の時間をお選びください');
+    await refreshApptTimeOptions();
+    return;
+  }
+  const booked = await getAppointmentsForDate(date);
+  if(booked.filter(b => b.time === time).length >= row.capacity){
+    showToast('その時間は満員になりました。別の時間をお選びください');
+    await refreshApptTimeOptions();
+    return;
+  }
+
   const appt = {
     template, date, time, note,
     requestedBy: currentUser ? currentUser.name : '家族',
@@ -1637,8 +1749,8 @@ async function submitAppointment(){
   if(ok){
     showToast('面談を申し込みました。看護師に通知されます');
     noteInput.value = '';
-    refreshApptLog();
-    refreshApptTimeOptions();
+    await refreshApptLog();
+    await refreshApptTimeOptions();
   }
 }
 
@@ -1647,16 +1759,22 @@ async function refreshApptTimeOptions(){
   const dateInput = document.getElementById('apptDate');
   if(!sel || !dateInput) return;
   const date = dateInput.value || todayISO();
+  const prev = sel.value;
   const row = await getScheduleRow(date);
   const booked = await getAppointmentsForDate(date);
   const countByTime = {};
   booked.forEach(b => { countByTime[b.time] = (countByTime[b.time] || 0) + 1; });
-  const available = row.slots.filter(t => (countByTime[t] || 0) < row.capacity);
+  const isToday = date === todayISO();
+  const nowStr = nowTimeStr();
+  const available = row.slots.filter(t =>
+    (countByTime[t] || 0) < row.capacity && (!isToday || t > nowStr) // 今日の場合、過ぎた時間は出さない
+  );
   if(available.length === 0){
     sel.innerHTML = `<option value="">対応可能な時間がありません</option>`;
     return;
   }
   sel.innerHTML = available.map(t => `<option value="${t}">${t}</option>`).join('');
+  if(available.includes(prev)) sel.value = prev; // 選択中の時間は維持する
 }
 
 async function refreshApptLog(){
@@ -1668,23 +1786,33 @@ async function refreshApptLog(){
     return;
   }
   el.innerHTML = list.slice(0,5).map(a => `
-    <div class="logitem"><span class="t">${escapeHtml(a.date)} ${escapeHtml(a.time)}</span><span>【${escapeHtml(a.template)}】${a.note ? escapeHtml(a.note) : ''}</span></div>
+    <div class="logitem">
+      <span class="t">${escapeHtml(a.date)} ${escapeHtml(a.time)}</span>
+      <span style="flex:1;">【${escapeHtml(a.template)}】${a.note ? escapeHtml(a.note) : ''}</span>
+      <button type="button" class="appt-cancel-btn"
+        onclick="cancelAppointmentAsFamily('${escapeHtml(a.id||'')}', '${escapeHtml(a.createdAt||'')}')">取り消し</button>
+    </div>
   `).join('');
 }
 
-function renderApptRequestList(appts){
+function renderApptRequestList(appts, patientId){
   const el = document.getElementById('apptRequestList');
   if(!el) return;
   if(appts.length === 0){
     el.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft);">まだ面談の申し込みはありません</div>`;
     return;
   }
+  const pid = patientId != null ? patientId : currentPatientId;
   el.innerHTML = appts.map(a => `
     <div class="appt-request-item">
       <div class="appt-when">📅 ${escapeHtml(a.date)} ${escapeHtml(a.time)}</div>
       <div>【${escapeHtml(a.template)}】</div>
       ${a.note ? `<div style="margin-top:4px;">${escapeHtml(a.note)}</div>` : ''}
-      <div style="margin-top:6px; color:var(--ink-soft); font-size:11.5px;">申込者：${escapeHtml(a.requestedBy||'家族')}</div>
+      <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+        <span style="color:var(--ink-soft); font-size:11.5px;">申込者：${escapeHtml(a.requestedBy||'家族')}</span>
+        <button type="button" class="appt-cancel-btn" style="margin-left:auto;"
+          onclick="cancelAppointmentAsNurse(${pid}, '${escapeHtml(a.id||'')}', '${escapeHtml(a.createdAt||'')}')">取り消し</button>
+      </div>
     </div>
   `).join('');
 }
@@ -1732,6 +1860,7 @@ async function initFamilyScreen(){
   familyPollTimer = setInterval(async ()=>{
     await refreshAiSummary();
     await refreshChat();
+    await refreshApptTimeOptions(); // 看護師が枠を増減したら自動で反映する
   }, 8000);
 }
 
