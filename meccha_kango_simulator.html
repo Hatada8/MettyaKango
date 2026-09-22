@@ -140,8 +140,15 @@
   .sidebar{
     background:var(--panel); border-right:1px solid var(--line);
     padding:20px 16px; overflow-y:auto;
+    display:flex; flex-direction:column; min-height:0;
   }
   .sidebar .label{ font-size:11px; color:var(--ink-soft); letter-spacing:.1em; padding:0 8px 10px; }
+  .sidebar-search-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .sidebar-search-row input{ flex:1; min-width:0; }
+  .sidebar-search-row select{
+    border:1px solid var(--line); border-radius:9px; padding:9px 8px; font-size:13px; background:var(--bg);
+  }
+  #patientListWrap{ flex:0 0 auto; overflow-y:auto; }
   .patient-item{
     display:flex; align-items:center; gap:12px;
     padding:12px 10px; border-radius:12px; cursor:pointer; margin-bottom:4px;
@@ -163,6 +170,30 @@
   .flag.high{ background:#C9564A; }
   .flag.mid{ background:#D9A441; }
   .flag.low{ background:#7FA98B; }
+
+  .sidebar-schedule{
+    margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
+    flex:1 1 auto; display:flex; flex-direction:column; min-height:120px;
+  }
+  .sidebar-schedule .label{ padding-bottom:8px; }
+  .schedule-add-row{ display:flex; gap:6px; margin-bottom:10px; }
+  .schedule-add-row input{
+    flex:1; min-width:0; border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:13px; background:var(--bg);
+  }
+  .schedule-add-row button{
+    background:var(--nurse); color:#fff; font-size:12.5px; font-weight:500; padding:0 12px; border-radius:8px;
+  }
+  .schedule-slot-list{ overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+  .schedule-slot{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-size:12.5px; padding:8px 10px; border-radius:8px; background:var(--bg);
+  }
+  .schedule-slot.booked{ background:var(--nurse-soft); color:var(--nurse-deep); }
+  .schedule-slot .slot-time{ font-family:'JetBrains Mono', monospace; font-weight:500; }
+  .schedule-slot .slot-status{ font-size:11px; color:var(--ink-soft); }
+  .schedule-slot.booked .slot-status{ color:var(--nurse-deep); }
+  .schedule-slot .slot-remove{ cursor:pointer; color:var(--ink-soft); font-size:13px; }
+  .schedule-slot .slot-remove:hover{ color:var(--family-deep); }
 
   .main{ padding:28px 32px 60px; max-width:920px; }
 
@@ -292,12 +323,6 @@
   }
   .call-btn:hover{ filter:brightness(1.06); }
 
-  .status-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; }
-  .status-row:last-child{ border-bottom:none; }
-  .status-row .k{ color:var(--ink-soft); }
-  .status-row .v{ font-weight:500; display:flex; align-items:center; gap:6px; }
-  .badge-ok{ color:#3E7A5C; }
-  .badge-ok::before{ content:"●"; font-size:8px; }
 
   .chat{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; max-height:260px; overflow-y:auto; padding-right:4px; }
   .msg{ max-width:75%; padding:10px 14px; border-radius:14px; font-size:13px; line-height:1.6; }
@@ -324,8 +349,6 @@
   .np-input{
     width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-size:13px; background:#fff;
   }
-  #watchStatusForm .field{ font-size:13px; }
-  #watchStatusForm .k{ color:var(--ink-soft); font-size:11.5px; margin-bottom:4px; }
 
   .id-badge{
     display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono', monospace;
@@ -429,7 +452,7 @@
         <div class="portal-card family" onclick="handleAuth('family')">
           <div class="icon">🏠</div>
           <h2>家族用</h2>
-          <p>離れていても今日の様子がわかる。見守り機能や面談の予約で、いつでもつながれます。</p>
+          <p>離れていても今日の様子がわかる。面談の予約で、いつでもつながれます。</p>
           <span class="enter" id="familyEnterLabel">家族としてログイン　→</span>
         </div>
       </div>
@@ -453,8 +476,14 @@
     <div class="shell">
       <div class="sidebar">
         <div class="label" id="patientCountLabel">担当患者</div>
-        <input type="text" id="patientSearch" placeholder="🔍 患者名で検索" oninput="renderPatientList()"
-               style="width:100%; border:1px solid var(--line); border-radius:9px; padding:9px 12px; font-size:13px; background:var(--bg); margin-bottom:10px;">
+        <div class="sidebar-search-row">
+          <input type="text" id="patientSearch" placeholder="🔍 患者名で検索" oninput="renderPatientList()">
+          <select id="patientSexFilter" onchange="renderPatientList()">
+            <option value="">性別：全て</option>
+            <option value="女性">女性</option>
+            <option value="男性">男性</option>
+          </select>
+        </div>
         <button onclick="toggleAddPatientForm()" style="width:100%; background:var(--nurse); color:#fff; font-size:13px; font-weight:500; padding:10px; border-radius:9px; margin-bottom:14px;">＋ 新規患者を登録</button>
 
         <div id="addPatientForm" style="display:none; background:var(--bg); border-radius:12px; padding:14px; margin-bottom:14px;">
@@ -471,7 +500,18 @@
           </div>
         </div>
 
-        <div id="patientList"></div>
+        <div id="patientListWrap">
+          <div id="patientList"></div>
+        </div>
+
+        <div class="sidebar-schedule">
+          <div class="label">📅 本日の面談予約タイムスケジュール</div>
+          <div class="schedule-add-row">
+            <input type="time" id="scheduleTimeInput">
+            <button type="button" onclick="addScheduleSlot()">＋ 時間を追加</button>
+          </div>
+          <div class="schedule-slot-list" id="scheduleSlotList"></div>
+        </div>
       </div>
       <div class="main" id="nurseMain"></div>
     </div>
@@ -501,33 +541,10 @@
 
       <div class="card">
         <h3><span class="n">●</span> 今日の様子（看護師のAI要約より）
-          <button onclick="refreshAiSummary(); refreshChat(); refreshWatchStatus(); refreshApptLog();" style="margin-left:auto; background:none; font-size:11.5px; color:var(--ink-soft); border:1px solid var(--line); padding:5px 10px; border-radius:8px;">更新</button>
+          <button onclick="refreshAiSummary(); refreshChat(); refreshApptLog();" style="margin-left:auto; background:none; font-size:11.5px; color:var(--ink-soft); border:1px solid var(--line); padding:5px 10px; border-radius:8px;">更新</button>
         </h3>
         <div class="ai-summary show" style="margin-top:0;" id="familyAiSummaryBox">
           <span class="tag">読み込み中…</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>📱 端末の見守り状況
-          <button onclick="toggleWatchForm()" style="margin-left:auto; background:none; font-size:11.5px; color:var(--ink-soft); border:1px solid var(--line); padding:5px 10px; border-radius:8px;">編集</button>
-        </h3>
-        <div id="watchStatusView">
-          <div style="font-size:12.5px; color:var(--ink-soft);">読み込み中…</div>
-        </div>
-        <div id="watchStatusForm" style="display:none; margin-top:10px; flex-direction:column; gap:8px;">
-          <div class="field"><div class="k">最終起動</div>
-            <input type="text" id="wLastActive" placeholder="例：今日 13:42（3時間前）" class="np-input"></div>
-          <div class="field"><div class="k">充電状況</div>
-            <input type="text" id="wBattery" placeholder="例：78%・充電中" class="np-input"></div>
-          <div class="field"><div class="k">今日の気分チェック</div>
-            <select id="wMood" class="np-input">
-              <option value="😊 元気です">😊 元気です</option>
-              <option value="🙂 まあまあです">🙂 まあまあです</option>
-              <option value="😔 あまり元気がありません">😔 あまり元気がありません</option>
-            </select>
-          </div>
-          <button onclick="saveWatchStatus()" style="background:var(--family-deep); color:#fff; font-size:13px; font-weight:500; padding:9px; border-radius:8px; margin-top:4px;">見守り状況を保存</button>
         </div>
       </div>
 
@@ -541,8 +558,8 @@
             <option value="その他（自由記入）">その他（自由記入）</option>
           </select>
           <div class="appt-datetime-row">
-            <input type="date" id="apptDate">
-            <input type="time" id="apptTime">
+            <input type="date" id="apptDate" onchange="refreshApptTimeOptions()">
+            <select id="apptTime"><option value="">読み込み中…</option></select>
           </div>
           <textarea id="apptNote" placeholder="伝えたいことがあれば自由にご記入ください（任意）"></textarea>
           <button type="button" onclick="submitAppointment()">この内容で予約を申し込む</button>
@@ -857,35 +874,6 @@ async function saveAiSummary(patientId, summaryText){
   return saveList(`aisummary:${patientId}`, [{ summary: summaryText, updatedAt }]);
 }
 
-/* ---------------- 見守り状況 ---------------- */
-async function getWatchStatus(patientId){
-  if(useSupabase){
-    try{
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?patient_id=eq.${patientId}`, { headers: sbHeaders() });
-      if(!res.ok) throw new Error(await res.text());
-      const rows = await res.json();
-      return rows[0] ? { lastActive:rows[0].last_active, battery:rows[0].battery, mood:rows[0].mood, updatedAt:rows[0].updated_at } : null;
-    }catch(e){ console.error(e); return null; }
-  }
-  const res = await loadList(`watch:${patientId}`);
-  return res.length ? res[0] : null;
-}
-async function saveWatchStatusData(patientId, data){
-  const updatedAt = new Date().toISOString();
-  if(useSupabase){
-    try{
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?on_conflict=patient_id`, {
-        method: "POST",
-        headers: sbHeaders({ "Prefer": "resolution=merge-duplicates" }),
-        body: JSON.stringify([{ patient_id: patientId, last_active:data.lastActive, battery:data.battery, mood:data.mood, updated_at:updatedAt }])
-      });
-      if(!res.ok) throw new Error(await res.text());
-      return true;
-    }catch(e){ console.error(e); showToast('Supabaseへの保存に失敗しました'); return false; }
-  }
-  return saveList(`watch:${patientId}`, [{ ...data, updatedAt }]);
-}
-
 /* ---------------- accounts（簡易パスワード認証） ---------------- */
 async function getNurseAccounts(){
   if(useSupabase){
@@ -1047,11 +1035,13 @@ async function enterNurseScreen(name){
   if(patients.length > 0) currentPatientId = patients[0].id;
   await refreshAppointmentsIndex();
   renderPatientList();
+  renderScheduleSlots();
   if(currentPatientId) renderPatient(currentPatientId);
   if(nurseListPollTimer) clearInterval(nurseListPollTimer);
   nurseListPollTimer = setInterval(async ()=>{
     await refreshAppointmentsIndex();
     renderPatientList();
+    renderScheduleSlots();
   }, 10000);
 }
 
@@ -1111,7 +1101,9 @@ function renderPatientList(){
 
   const list = document.getElementById('patientList');
   const q = (document.getElementById('patientSearch')?.value || '').trim();
-  const filtered = q ? patients.filter(p => p.name.includes(q)) : patients;
+  const sexFilter = document.getElementById('patientSexFilter')?.value || '';
+  let filtered = q ? patients.filter(p => p.name.includes(q)) : patients;
+  if(sexFilter) filtered = filtered.filter(p => p.sex === sexFilter);
   if(patients.length === 0){
     list.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft); padding:16px 8px;">まだ患者が登録されていません。<br>「＋ 新規患者を登録」から追加してください。</div>`;
     return;
@@ -1139,6 +1131,99 @@ async function refreshAppointmentsIndex(){
     idx[p.id] = await getAppointments(p.id);
   }
   appointmentsIndex = idx;
+}
+
+/* ---------------- nurse: 本日の面談予約タイムスケジュール ---------------- */
+function todayISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+const SCHEDULE_SLOT_SENTINEL_ID = 0; // watch_status の患者IDには使われない予約枠専用の番号
+async function getScheduleSlots(dateStr){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?patient_id=eq.${SCHEDULE_SLOT_SENTINEL_ID}`, { headers: sbHeaders() });
+      if(!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      if(rows[0] && rows[0].last_active === dateStr){
+        try{ return JSON.parse(rows[0].mood || '[]'); }catch(e){ return []; }
+      }
+      return [];
+    }catch(e){ console.error(e); return []; }
+  }
+  try{
+    const raw = localStorage.getItem(`scheduleSlots_${dateStr}`);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+async function saveScheduleSlots(dateStr, slots){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/watch_status?on_conflict=patient_id`, {
+        method: "POST",
+        headers: sbHeaders({ "Prefer": "resolution=merge-duplicates" }),
+        body: JSON.stringify([{ patient_id:SCHEDULE_SLOT_SENTINEL_ID, last_active:dateStr, battery:'', mood:JSON.stringify(slots) }])
+      });
+      if(!res.ok) throw new Error(await res.text());
+      return true;
+    }catch(e){ console.error(e); showToast('面談枠の保存に失敗しました'); return false; }
+  }
+  localStorage.setItem(`scheduleSlots_${dateStr}`, JSON.stringify(slots));
+  return true;
+}
+async function getAppointmentsForDate(dateStr){
+  if(useSupabase){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/appointments?date=eq.${dateStr}`, { headers: sbHeaders() });
+      if(!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      return rows.map(r => ({ time:r.time }));
+    }catch(e){ console.error(e); return []; }
+  }
+  const all = [];
+  for(const p of patients){
+    const list = await getAppointments(p.id);
+    all.push(...list.filter(a => a.date === dateStr));
+  }
+  return all;
+}
+async function addScheduleSlot(){
+  const input = document.getElementById('scheduleTimeInput');
+  const time = input.value;
+  if(!time){ showToast('時間を選択してください'); return; }
+  const date = todayISO();
+  const slots = await getScheduleSlots(date);
+  if(slots.includes(time)){ showToast('その時間はすでに追加されています'); return; }
+  slots.push(time);
+  slots.sort();
+  const ok = await saveScheduleSlots(date, slots);
+  if(ok) input.value = '';
+  await renderScheduleSlots();
+}
+async function removeScheduleSlot(time){
+  const date = todayISO();
+  const slots = (await getScheduleSlots(date)).filter(t => t !== time);
+  await saveScheduleSlots(date, slots);
+  await renderScheduleSlots();
+}
+async function renderScheduleSlots(){
+  const el = document.getElementById('scheduleSlotList');
+  if(!el) return;
+  const date = todayISO();
+  const slots = await getScheduleSlots(date);
+  if(slots.length === 0){
+    el.innerHTML = `<div style="font-size:12px; color:var(--ink-soft);">面談枠が未登録です。時間を追加してください</div>`;
+    return;
+  }
+  const booked = await getAppointmentsForDate(date);
+  const bookedTimes = new Set(booked.map(a => a.time));
+  el.innerHTML = slots.map(time => `
+    <div class="schedule-slot ${bookedTimes.has(time) ? 'booked' : ''}">
+      <span class="slot-time">${escapeHtml(time)}</span>
+      <span class="slot-status">${bookedTimes.has(time) ? '予約あり' : '空き'}</span>
+      <span class="slot-remove" onclick="removeScheduleSlot('${time}')" title="削除">×</span>
+    </div>
+  `).join('');
 }
 
 /* ---------------- nurse: patient detail ---------------- */
@@ -1463,7 +1548,24 @@ async function submitAppointment(){
     showToast('面談を申し込みました。看護師に通知されます');
     noteInput.value = '';
     refreshApptLog();
+    refreshApptTimeOptions();
   }
+}
+
+async function refreshApptTimeOptions(){
+  const sel = document.getElementById('apptTime');
+  const dateInput = document.getElementById('apptDate');
+  if(!sel || !dateInput) return;
+  const date = dateInput.value || todayISO();
+  const allSlots = await getScheduleSlots(date);
+  const booked = await getAppointmentsForDate(date);
+  const bookedTimes = new Set(booked.map(a => a.time));
+  const available = allSlots.filter(t => !bookedTimes.has(t));
+  if(available.length === 0){
+    sel.innerHTML = `<option value="">対応可能な時間がありません</option>`;
+    return;
+  }
+  sel.innerHTML = available.map(t => `<option value="${t}">${t}</option>`).join('');
 }
 
 async function refreshApptLog(){
@@ -1527,13 +1629,18 @@ async function initFamilyScreen(){
   const id = currentFamilyPatient.id;
   await refreshAiSummary();
   await refreshChat();
-  await refreshWatchStatus();
   await refreshApptLog();
+  const dateInput = document.getElementById('apptDate');
+  if(dateInput){
+    const today = todayISO();
+    dateInput.min = today;
+    if(!dateInput.value) dateInput.value = today;
+  }
+  await refreshApptTimeOptions();
   if(familyPollTimer) clearInterval(familyPollTimer);
   familyPollTimer = setInterval(async ()=>{
     await refreshAiSummary();
     await refreshChat();
-    await refreshWatchStatus();
   }, 8000);
 }
 
@@ -1548,40 +1655,6 @@ async function refreshAiSummary(){
   const t = new Date(data.updatedAt);
   const tstr = isNaN(t) ? '' : `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}更新`;
   box.innerHTML = `<span class="tag">AI要約・本日 ${tstr}</span>${escapeHtml(data.summary)}`;
-}
-
-/* ---------------- family: 見守り状況 ---------------- */
-function toggleWatchForm(){
-  const form = document.getElementById('watchStatusForm');
-  const isHidden = form.style.display === 'none' || form.style.display === '';
-  form.style.display = isHidden ? 'flex' : 'none';
-}
-async function refreshWatchStatus(){
-  const view = document.getElementById('watchStatusView');
-  if(!view || !currentFamilyPatient) return;
-  const data = await getWatchStatus(currentFamilyPatient.id);
-  if(!data){
-    view.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft);">まだ見守り状況が入力されていません。「編集」から入力してください。</div>`;
-    return;
-  }
-  view.innerHTML = `
-    <div class="status-row"><span class="k">最終起動</span><span class="v badge-ok">${escapeHtml(data.lastActive||'—')}</span></div>
-    <div class="status-row"><span class="k">充電状況</span><span class="v badge-ok">${escapeHtml(data.battery||'—')}</span></div>
-    <div class="status-row"><span class="k">今日の気分チェック</span><span class="v badge-ok">${escapeHtml(data.mood||'—')}</span></div>
-  `;
-}
-async function saveWatchStatus(){
-  if(!currentFamilyPatient) return;
-  const lastActive = document.getElementById('wLastActive').value.trim();
-  const battery = document.getElementById('wBattery').value.trim();
-  const mood = document.getElementById('wMood').value;
-  if(!lastActive || !battery){ showToast('最終起動と充電状況を入力してください'); return; }
-  const ok = await saveWatchStatusData(currentFamilyPatient.id, { lastActive, battery, mood });
-  if(ok){
-    showToast('見守り状況を保存しました');
-    document.getElementById('watchStatusForm').style.display = 'none';
-    refreshWatchStatus();
-  }
 }
 
 /* ---------------- family: chat ---------------- */
