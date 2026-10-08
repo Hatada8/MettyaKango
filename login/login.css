@@ -5,9 +5,10 @@
     text-align:center;
   }
   .portal .brandname{
-    font-size:50px; font-weight:700; letter-spacing:.14em; color:var(--nurse-deep);
-    margin-bottom:14px;
+    font-size:clamp(30px, 10.5vw, 50px); font-weight:700; letter-spacing:.14em; color:var(--nurse-deep);
+    margin-bottom:14px; white-space:nowrap;
   }
+  @media(max-width:420px){ .portal .brandname{ letter-spacing:.06em; } }
   .portal h1{
     font-size:20px; font-weight:700; line-height:1.5; margin:0 0 6px;
   }

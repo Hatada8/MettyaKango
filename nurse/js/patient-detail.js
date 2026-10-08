@@ -2,6 +2,7 @@
 async function renderPatient(id){
   currentPatientId = id;
   renderPatientList();
+  if(isSmallScreen()) setSidebar(false);   // スマホは選んだら一覧を閉じる
 
   const main = document.getElementById('nurseMain');
   main.innerHTML = `

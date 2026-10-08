@@ -33,8 +33,20 @@ async function sendStamp(text){
   await appendMsg(text);
 }
 async function appendMsg(val){
+  if(!canSendChat()){ showToast('退院されたため、送信できません'); return; }
   try{
     await sendChat({ patientId: session.patientId, familyId: session.familyId, body: val });
     await refreshChat();
   }catch(e){ showError(e, '送信できませんでした'); }
+}
+
+/* 退院後は見るだけ（送信欄を隠す） */
+function canSendChat(){
+  return !familyDetail || !!familyDetail.current;
+}
+function applyChatMode(){
+  const open = canSendChat();
+  ['chatInputArea', 'stampRow'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.toggle('hidden', !open); });
+  const note = document.getElementById('chatClosedNote');
+  if(note) note.classList.toggle('hidden', open);
 }

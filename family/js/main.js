@@ -31,6 +31,7 @@ async function refreshPatient(){
       return;
     }
     familyDetail = d;
+    applyChatMode();
     const p = d.patient;
     const age = calcAge(p.birth_date);
     const diag = s.filter(x => x.symptom_master && x.symptom_master.symptom_type_id === SYMPTOM_TYPE.DIAGNOSIS)

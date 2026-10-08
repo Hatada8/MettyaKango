@@ -65,6 +65,7 @@ async function openPatientForm({ mode = 'create', detail = null, symptoms = [], 
           <input class="f-input" name="patient_no" inputmode="numeric" value="${esc(patientNo)}" ${mode === 'edit' ? 'readonly' : ''}></label>
         <label class="form-item"><span>性別</span><select class="f-input" name="sex_id">${masterOptions('sex', p.sex_id ?? 2)}</select></label>
       </div>
+      ${masters.hospital.length ? `<label class="form-item"><span>病院</span><select class="f-input" name="hospital_id">${masterOptions('hospital', p.hospital_id || masters.hospital[0].hospital_id)}</select></label>` : ''}
       <div class="form-grid">
         <label class="form-item"><span>氏名</span><input class="f-input" name="patient_name" value="${esc(p.patient_name)}" placeholder="例：田中 花子"></label>
         <label class="form-item"><span>ふりがな</span><input class="f-input" name="patient_kana" value="${esc(p.patient_kana)}" placeholder="例：たなか はなこ"></label>
@@ -104,7 +105,8 @@ async function openPatientForm({ mode = 'create', detail = null, symptoms = [], 
         patient_name: f.get('patient_name').trim(),
         patient_kana: f.get('patient_kana').trim() || null,
         birth_date: f.get('birth_date') || null,
-        sex_id: Number(f.get('sex_id'))
+        sex_id: Number(f.get('sex_id')),
+        ...(f.get('hospital_id') ? { hospital_id: Number(f.get('hospital_id')) } : {})
       } : null;
       const admissionRow = showAdmission ? {
         admitted_on: f.get('admitted_on'),

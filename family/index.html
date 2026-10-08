@@ -46,11 +46,12 @@
         <div class="chat" id="chatBox">
           <div class="empty">読み込み中…</div>
         </div>
-        <div class="chat-input">
+        <p class="chat-closed hidden" id="chatClosedNote">退院されたため、メッセージの送信はできません。これまでのやりとりは、ご覧いただけます。</p>
+        <div class="chat-input" id="chatInputArea">
           <input id="chatInput" type="text" placeholder="メッセージを入力…" onkeydown="if(event.key==='Enter' && !event.isComposing) sendMsg()">
           <button class="chat-send" onclick="sendMsg()">送信</button>
         </div>
-        <div class="stamp-row">
+        <div class="stamp-row" id="stampRow">
           <button class="stamp-btn" onclick="sendStamp('ありがとうございます😊')">🙏 ありがとうございます</button>
           <button class="stamp-btn" onclick="sendStamp('安心しました')">😌 安心しました</button>
           <button class="stamp-btn" onclick="sendStamp('よろしくお願いします')">🙇 よろしくお願いします</button>

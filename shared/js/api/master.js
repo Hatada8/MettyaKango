@@ -9,7 +9,9 @@ const MASTER_DEFS = {
   role:           { table: 'role_master',            id: 'role_id',            name: 'role_name',            label: '役割' },
   permission:     { table: 'permission_master',      id: 'permission_id',      name: 'permission_name',      label: '権限' },
   department:     { table: 'department_master',      id: 'department_id',      name: 'department_name',      label: '分野' },
-  symptom:        { table: 'symptom_master',         id: 'symptom_id',         name: 'symptom_name',         label: '症状' }
+  symptom:        { table: 'symptom_master',         id: 'symptom_id',         name: 'symptom_name',         label: '症状' },
+  // optional：add_hospital_master.sql を実行する前でも、ほかの画面が止まらないようにする
+  hospital:       { table: 'hospital_master',        id: 'hospital_id',        name: 'hospital_name',        label: '病院', optional: true }
 };
 
 /* よく使う番号（区分マスタの値） */
@@ -22,7 +24,9 @@ const masters = {};
 /* すべてのマスタをまとめて読み込む */
 async function loadMasters(){
   const keys = Object.keys(MASTER_DEFS);
-  const lists = await Promise.all(keys.map(k => db.select(MASTER_DEFS[k].table, 'order=sort_order,' + MASTER_DEFS[k].id)));
+  const lists = await Promise.all(keys.map(k =>
+    db.select(MASTER_DEFS[k].table, 'order=sort_order,' + MASTER_DEFS[k].id)
+      .catch(e => { if(MASTER_DEFS[k].optional) return []; throw e; })));
   keys.forEach((k, i) => { masters[k] = lists[i]; });
   return masters;
 }

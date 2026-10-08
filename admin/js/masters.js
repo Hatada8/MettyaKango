@@ -11,6 +11,7 @@ const PERMISSION_FLAGS = [
 async function loadMasterEditors(){
   try{
     await loadMasters();
+    renderMasterEditor('hospital', '病院（病院コードと名前）', '新しい病院の名前', false, true);
     renderMasterEditor('department', '分野', '新しい分野（例：泌尿器科）');
     renderMasterEditor('role', '役割（職種）', '新しい役割（例：臨床検査技師）');
     renderMasterEditor('symptom', '症状（診断名・アレルギー・既往歴）', '新しい症状の名前', true);
@@ -18,7 +19,7 @@ async function loadMasterEditors(){
   }catch(e){ showError(e, 'マスタを読み込めませんでした'); }
 }
 
-function renderMasterEditor(key, title, placeholder, withType = false){
+function renderMasterEditor(key, title, placeholder, withType = false, withCode = false){
   const def = MASTER_DEFS[key];
   const rows = masters[key];
   const typeSelect = (selected, name) =>
@@ -32,7 +33,8 @@ function renderMasterEditor(key, title, placeholder, withType = false){
         <div class="master-row ${withType ? 'with-desc' : ''}" data-id="${r[def.id]}">
           <span class="num">${r[def.id]}</span>
           ${withType ? typeSelect(r.symptom_type_id) : ''}
-          <input class="input" value="${esc(r[def.name])}">
+          ${withCode ? `<input class="input code" data-code inputmode="numeric" value="${esc(r.hospital_code)}" placeholder="病院コード" aria-label="病院コード">` : ''}
+          <input class="input" data-name value="${esc(r[def.name])}">
           <button type="button" class="light small" onclick="saveMasterRow('${key}', this)">保存</button>
           <button type="button" class="danger small" onclick="removeMasterRow('${key}', ${r[def.id]})">削除</button>
           ${withType ? `<input class="input desc" data-desc value="${esc(r.symptom_description || '')}" placeholder="ご家族向けの説明（家族画面で病名をタップすると表示されます）">` : ''}
@@ -41,6 +43,7 @@ function renderMasterEditor(key, title, placeholder, withType = false){
     <form class="master-row ${withType ? 'with-desc' : ''}" onsubmit="event.preventDefault(); addMasterFromForm('${key}', this)">
       <span class="num">＋</span>
       ${withType ? typeSelect(SYMPTOM_TYPE.DIAGNOSIS, 'type') : ''}
+      ${withCode ? `<input class="input code" name="code" inputmode="numeric" placeholder="病院コード（数字）" aria-label="病院コード">` : ''}
       <input class="input" name="name" placeholder="${esc(placeholder)}">
       <button type="submit" class="primary small">追加</button>
       ${withType ? `<input class="input desc" name="desc" placeholder="ご家族向けの説明（あとからでも入力できます）">` : ''}
@@ -50,9 +53,14 @@ function renderMasterEditor(key, title, placeholder, withType = false){
 async function saveMasterRow(key, btn){
   const row = btn.closest('.master-row');
   const def = MASTER_DEFS[key];
-  const name = row.querySelector('input').value.trim();
+  const name = row.querySelector('[data-name]').value.trim();
   if(!name){ toast('名前を入力してください'); return; }
   const patch = { [def.name]: name };
+  const code = row.querySelector('[data-code]');
+  if(code){
+    if(!/^\d+$/.test(code.value.trim())){ toast('病院コードは数字で入力してください'); return; }
+    patch.hospital_code = Number(code.value.trim());
+  }
   const type = row.querySelector('[data-type]');
   if(type) patch.symptom_type_id = Number(type.value);
   const desc = row.querySelector('[data-desc]');
@@ -75,6 +83,11 @@ async function addMasterFromForm(key, form){
       const row = await ensureSymptom(Number(form.elements.type.value), name);
       const desc = form.elements.desc.value.trim();
       if(desc) await updateMasterRow('symptom', row.symptom_id, { symptom_description: desc });
+    }
+    else if(key === 'hospital'){
+      const code = form.elements.code.value.trim();
+      if(!/^\d+$/.test(code)){ toast('病院コードは数字で入力してください'); return; }
+      await addMasterRow(key, name, { hospital_code: Number(code) });
     }
     else await addMasterRow(key, name);
     toast('追加しました');

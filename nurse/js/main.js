@@ -1,6 +1,7 @@
 /* 看護師画面：起動処理 */
 async function initNurseScreen(){
   if(!requireStaff()) return;
+  initSidebar();
   document.getElementById('nurseWelcome').textContent =
     `${session.name} さん（${session.roleName}・${session.permissionName}）としてログイン中`;
   document.getElementById('adminLink').classList.toggle('hidden', !canOpenAdmin());

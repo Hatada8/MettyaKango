@@ -33,9 +33,9 @@
 
   .chat-input{ display:flex; gap:8px; }
   .chat-input input{
-    flex:1; border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-size:13px; background:var(--bg);
+    flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-size:13px; background:var(--bg);
   }
-  .chat-send{ background:var(--family-deep); color:#fff; padding:0 18px; border-radius:10px; font-size:13px; font-weight:500; }
+  .chat-send{ flex:none; white-space:nowrap; background:var(--family-deep); color:#fff; padding:0 18px; border-radius:10px; font-size:13px; font-weight:500; }
   .chat-send:hover{ filter:brightness(1.1); }
 
   .hidden{ display:none !important; }

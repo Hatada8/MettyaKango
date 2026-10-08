@@ -10,7 +10,7 @@ async function loadEmployees(){
 
 function renderEmployees(){
   $('employeeTable').innerHTML = `
-    <thead><tr><th>職員番号</th><th>氏名</th><th>役割</th><th>権限</th><th>分野</th><th>状態</th><th></th></tr></thead>
+    <thead><tr><th>職員番号</th><th>氏名</th><th>役割</th><th>権限</th><th>病院</th><th>分野</th><th>状態</th><th></th></tr></thead>
     <tbody>${employees.map(e => {
       const deleted = e.delete_flag === 1;
       const self = e.employee_id === session.employeeId;
@@ -20,6 +20,7 @@ function renderEmployees(){
           <td>${esc(e.employee_name)}${e.employee_kana ? `<br><small class="muted">${esc(e.employee_kana)}</small>` : ''}</td>
           <td>${esc(e.role_master ? e.role_master.role_name : '')}</td>
           <td>${esc(e.permission_master ? e.permission_master.permission_name : '')}</td>
+          <td>${esc(e.hospital_id ? masterName('hospital', e.hospital_id) || '—' : '—')}</td>
           <td>${esc(e.department_master ? e.department_master.department_name : '—')}</td>
           <td><span class="badge ${deleted ? 'gray' : 'lv1'}">${deleted ? '削除済み' : '有効'}</span></td>
           <td class="actions">
@@ -49,6 +50,7 @@ function openEmployeeForm(employeeId){
         <label class="field"><span>氏名</span><input name="name" value="${esc(e.employee_name)}" required></label>
         <label class="field"><span>ふりがな</span><input name="kana" value="${esc(e.employee_kana)}"></label>
       </div>
+      ${masters.hospital.length ? `<label class="field"><span>病院</span><select name="hospital_id">${masterOptions('hospital', e.hospital_id || masters.hospital[0].hospital_id)}</select></label>` : ''}
       <div class="field-row">
         <label class="field"><span>役割（職種）</span><select name="role_id">${masterOptions('role', e.role_id || 2)}</select></label>
         <label class="field"><span>権限</span><select name="permission_id">${masterOptions('permission', e.permission_id || 2)}</select></label>
@@ -63,7 +65,8 @@ function openEmployeeForm(employeeId){
         kana: f.get('kana').trim(),
         roleId: f.get('role_id'),
         permissionId: f.get('permission_id'),
-        departmentId: f.get('department_id')
+        departmentId: f.get('department_id'),
+        hospitalId: f.get('hospital_id')
       };
       if(!/^\d+$/.test(data.employeeNo)){ toast('職員番号は数字で入力してください'); return false; }
       if(!data.name){ toast('氏名を入力してください'); return false; }

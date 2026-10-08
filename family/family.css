@@ -62,3 +62,5 @@
   .keyword-detail{ padding:14px; }
   .stamp-btn{ padding:9px 13px; }
 }
+
+.chat-closed{ margin:12px 0 0; padding:10px 14px; border-radius:10px; background:#EEF2F4; color:var(--ink-soft); font-size:12.5px; line-height:1.7; }

@@ -15,8 +15,9 @@ async function listDoctors(){
   return db.select('employee_master', `select=employee_id,employee_name,employee_kana,department_id&role_id=eq.${ROLE.DOCTOR}&order=employee_no`);
 }
 
-async function createEmployee({ employeeNo, name, kana, password, roleId, permissionId, departmentId }){
+async function createEmployee({ employeeNo, name, kana, password, roleId, permissionId, departmentId, hospitalId }){
   return db.insert('employee_master', {
+    ...(hospitalId ? { hospital_id: Number(hospitalId) } : {}),
     employee_no: Number(employeeNo),
     employee_name: name,
     employee_kana: kana || null,
@@ -28,8 +29,9 @@ async function createEmployee({ employeeNo, name, kana, password, roleId, permis
 }
 
 /* password を渡したときだけパスワードも変える */
-async function updateEmployee(employeeId, { name, kana, password, roleId, permissionId, departmentId }){
+async function updateEmployee(employeeId, { name, kana, password, roleId, permissionId, departmentId, hospitalId }){
   const patch = {
+    ...(hospitalId ? { hospital_id: Number(hospitalId) } : {}),
     employee_name: name,
     employee_kana: kana || null,
     role_id: Number(roleId),

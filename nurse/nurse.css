@@ -264,3 +264,12 @@
   .ai-compare b{ font-size:17px; color:var(--nurse-deep); }
   .ai-compare .arrow{ color:var(--ink-soft); }
   .ai-compare .ratio{ margin-left:auto; font-size:12px; color:var(--ink-soft); }
+
+  /* ---------- 患者一覧の開閉（☰） ---------- */
+  .menu-btn{
+    align-self:center; width:38px; height:38px; border-radius:10px; font-size:19px; line-height:1;
+    background:var(--bg); border:1px solid var(--line); color:var(--ink); margin-right:2px;
+  }
+  .menu-btn:hover{ border-color:var(--nurse); background:var(--nurse-soft); }
+  .shell.sidebar-collapsed{ grid-template-columns:1fr; }
+  .shell.sidebar-collapsed .sidebar{ display:none; }
