@@ -1,5 +1,5 @@
 /* ログイン画面：職員ログイン・家族ログイン
-   職員：職員番号＋パスワード（アカウントは管理者が登録）
+   職員：病院コード＋職員番号＋パスワード（アカウントは管理者が登録）
    家族：患者ID＋メールアドレス＋パスワード（初めてのメールアドレスならその場で登録） */
 let loginRole = 'staff';
 
@@ -21,17 +21,21 @@ function handleAuth(role){
   if(role === 'family'){
     loginFamily(document.getElementById('loginPatientNo').value.trim(), document.getElementById('loginEmail').value.trim(), password);
   }else{
-    loginStaff(document.getElementById('loginStaffNo').value.trim(), password);
+    loginStaff(document.getElementById('loginStaffNo').value.trim(), password, document.getElementById('loginHospitalCode').value.trim());
   }
 }
 
-async function loginStaff(employeeNo, password){
+async function loginStaff(employeeNo, password, hospitalCode){
+  if(!/^\d+$/.test(hospitalCode || '')){ showToast('病院コードを数字で入力してください'); return; }
   if(!/^\d+$/.test(employeeNo)){ showToast('職員番号を数字で入力してください'); return; }
   if(!password){ showToast('パスワードを入力してください'); return; }
   try{
+    const hospital = await findHospitalByCode(hospitalCode);
+    if(!hospital){ showToast('病院コードが見つかりません'); return; }
     const emp = await findEmployeeByNo(employeeNo);
-    if(!emp){ showToast('職員番号が見つかりません'); return; }
+    if(!emp || emp.hospital_id !== hospital.hospital_id){ showToast('この病院に、その職員番号はありません'); return; }
     if(emp.password_hash !== await sha256Hex(password)){ showToast('パスワードが違います'); return; }
+    try{ localStorage.setItem('mecchakango_hospital_code', hospitalCode); }catch(e){}
     goTo('../nurse/index.html', buildStaffSession(emp));
   }catch(e){
     showError(e, 'ログインできませんでした。通信状態を確認してください');
@@ -53,3 +57,12 @@ async function loginFamily(patientNo, email, password){
     showError(e, 'ログインできませんでした。通信状態を確認してください');
   }
 }
+
+/* 前回入力した病院コードを入れておく */
+document.addEventListener('DOMContentLoaded', () => {
+  try{
+    const saved = localStorage.getItem('mecchakango_hospital_code');
+    const input = document.getElementById('loginHospitalCode');
+    if(saved && input && !input.value) input.value = saved;
+  }catch(e){}
+});

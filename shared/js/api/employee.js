@@ -6,6 +6,12 @@ async function findEmployeeByNo(employeeNo){
   return rows[0] || null;
 }
 
+/* 病院コード（数字）から病院を探す */
+async function findHospitalByCode(code){
+  const rows = await db.select('hospital_master', `hospital_code=eq.${Number(code)}`);
+  return rows[0] || null;
+}
+
 async function listEmployees({ includeDeleted = false } = {}){
   return db.select('employee_master', `${EMPLOYEE_SELECT}&order=sort_order,employee_no`, { includeDeleted });
 }

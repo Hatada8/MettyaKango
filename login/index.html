@@ -28,8 +28,12 @@
         <button type="button" id="tabFamily" class="auth-tab" onclick="setLoginRole('family')">ご家族の方</button>
       </div>
 
-      <!-- 職員：職員番号＋パスワード -->
+      <!-- 職員：病院コード＋職員番号＋パスワード -->
       <div id="staffFields">
+        <div class="login-field">
+          <div class="login-label">病院コード</div>
+          <input type="text" id="loginHospitalCode" inputmode="numeric" placeholder="例：1001" autocomplete="organization">
+        </div>
         <div class="login-field">
           <div class="login-label">職員番号</div>
           <input type="text" id="loginStaffNo" inputmode="numeric" placeholder="例：10001" autocomplete="username">

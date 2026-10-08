@@ -10,7 +10,7 @@ v2 と同じ Supabase のテーブル（`employee_master` / `patient_master` な
 ```
 mecchakango/
 ├ index.html            ← 最初に開くファイル（ログイン画面へ移動します）
-├ login/                ← ログイン画面（職員：職員番号＋パスワード／ご家族：患者ID＋メール＋パスワード）
+├ login/                ← ログイン画面（職員：病院コード＋職員番号＋パスワード／ご家族：患者ID＋メール＋パスワード）
 │  └ js/  login.js（ログイン） / demo-login.js（デモ用かんたんログイン・あとで消す） / slideshow.js（背景の写真）
 ├ nurse/                ← 看護師用（トップ：患者一覧＋プロフィール＋各ページへのボタン）
 │  ├ index.html          ← 患者プロフィール ＋ 4 つのボタン
