@@ -31,6 +31,10 @@ async function initSubPage(onReady){
     </div>`;
 
   await onReady();
+
+  // このページを見た、と記録する（<body data-read-target="番号"> で指定）
+  const target = Number(document.body.dataset.readTarget);
+  if(target) await markRead(session.employeeId, currentPatientId, target);
 }
 
 function backToProfile(){

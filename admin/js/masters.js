@@ -29,19 +29,21 @@ function renderMasterEditor(key, title, placeholder, withType = false){
     <p class="muted" style="margin-top:-6px;">名前を直したら「保存」。使わなくなったものは「削除」（削除しても過去の記録はそのまま残ります）。</p>
     <div class="master-list">
       ${rows.map(r => `
-        <div class="master-row" data-id="${r[def.id]}">
+        <div class="master-row ${withType ? 'with-desc' : ''}" data-id="${r[def.id]}">
           <span class="num">${r[def.id]}</span>
           ${withType ? typeSelect(r.symptom_type_id) : ''}
           <input class="input" value="${esc(r[def.name])}">
           <button type="button" class="light small" onclick="saveMasterRow('${key}', this)">保存</button>
           <button type="button" class="danger small" onclick="removeMasterRow('${key}', ${r[def.id]})">削除</button>
+          ${withType ? `<input class="input desc" data-desc value="${esc(r.symptom_description || '')}" placeholder="ご家族向けの説明（家族画面で病名をタップすると表示されます）">` : ''}
         </div>`).join('') || '<p class="empty">まだありません</p>'}
     </div>
-    <form class="master-row" onsubmit="event.preventDefault(); addMasterFromForm('${key}', this)">
+    <form class="master-row ${withType ? 'with-desc' : ''}" onsubmit="event.preventDefault(); addMasterFromForm('${key}', this)">
       <span class="num">＋</span>
       ${withType ? typeSelect(SYMPTOM_TYPE.DIAGNOSIS, 'type') : ''}
       <input class="input" name="name" placeholder="${esc(placeholder)}">
       <button type="submit" class="primary small">追加</button>
+      ${withType ? `<input class="input desc" name="desc" placeholder="ご家族向けの説明（あとからでも入力できます）">` : ''}
     </form>`;
 }
 
@@ -53,6 +55,8 @@ async function saveMasterRow(key, btn){
   const patch = { [def.name]: name };
   const type = row.querySelector('[data-type]');
   if(type) patch.symptom_type_id = Number(type.value);
+  const desc = row.querySelector('[data-desc]');
+  if(desc) patch.symptom_description = desc.value.trim() || null;
   try{
     await updateMasterRow(key, row.dataset.id, patch);
     toast('保存しました');
@@ -67,7 +71,11 @@ async function addMasterFromForm(key, form){
   const name = form.elements.name.value.trim();
   if(!name){ toast('名前を入力してください'); return; }
   try{
-    if(key === 'symptom') await ensureSymptom(Number(form.elements.type.value), name);
+    if(key === 'symptom'){
+      const row = await ensureSymptom(Number(form.elements.type.value), name);
+      const desc = form.elements.desc.value.trim();
+      if(desc) await updateMasterRow('symptom', row.symptom_id, { symptom_description: desc });
+    }
     else await addMasterRow(key, name);
     toast('追加しました');
     await loadMasterEditors();

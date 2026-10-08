@@ -5,6 +5,17 @@ async function listPatientSymptoms(patientId){
     `select=*,symptom_master(symptom_name,symptom_type_id)&patient_id=eq.${patientId}&order=onset_on.nullsfirst,patient_symptom_id`);
 }
 
+/* ご家族向けの説明（symptom_description）つきで読む。
+   add_read_status_and_symptom_info.sql をまだ実行していないときは、説明なしで読む */
+async function listPatientSymptomsWithInfo(patientId){
+  try{
+    return await db.select('patient_symptom',
+      `select=*,symptom_master(symptom_name,symptom_type_id,symptom_description)&patient_id=eq.${patientId}&order=onset_on.nullsfirst,patient_symptom_id`);
+  }catch(e){
+    return listPatientSymptoms(patientId);
+  }
+}
+
 /* 選ばれた症状の一覧に合わせて、足りないものを追加・外れたものを削除する */
 async function syncPatientSymptoms(patientId, admissionId, selectedIds){
   const current = await listPatientSymptoms(patientId);

@@ -12,7 +12,7 @@ async function listEmployees({ includeDeleted = false } = {}){
 
 /* 医師だけ（主治医の選択肢） */
 async function listDoctors(){
-  return db.select('employee_master', `select=employee_id,employee_name,department_id&role_id=eq.${ROLE.DOCTOR}&order=employee_no`);
+  return db.select('employee_master', `select=employee_id,employee_name,employee_kana,department_id&role_id=eq.${ROLE.DOCTOR}&order=employee_no`);
 }
 
 async function createEmployee({ employeeNo, name, kana, password, roleId, permissionId, departmentId }){

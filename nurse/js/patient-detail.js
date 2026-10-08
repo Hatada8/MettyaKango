@@ -18,10 +18,10 @@ async function renderPatient(id){
 
 /* プロフィールの下の、各ページへ行くボタン */
 const NURSE_PAGES = [
-  { file: 'ai-summary.html',   icon: '✨', title: 'AI要約',         desc: 'これまでの記録をまとめます' },
-  { file: 'handover.html',     icon: '🗒️', title: '申し送りメモ',   desc: '今日のことを短く記録します' },
-  { file: 'private-memo.html', icon: '🌱', title: 'プライベートメモ', desc: '趣味・好きなものなど' },
-  { file: 'messages.html',     icon: '💬', title: 'メッセージ',      desc: 'ご家族とやりとりします' }
+  { file: 'ai-summary.html',   target: READ_TARGET.AI_SUMMARY,   icon: '✨', title: 'AI要約',         desc: 'これまでの記録をまとめます' },
+  { file: 'handover.html',     target: READ_TARGET.HANDOVER,     icon: '🗒️', title: '申し送りメモ',   desc: '今日のことを短く記録します' },
+  { file: 'private-memo.html', target: READ_TARGET.PRIVATE_MEMO, icon: '🌱', title: 'プライベートメモ', desc: '趣味・好きなものなど' },
+  { file: 'messages.html',     target: READ_TARGET.MESSAGES,     icon: '💬', title: 'メッセージ',      desc: 'ご家族とやりとりします' }
 ];
 
 function openNursePage(file){
@@ -31,7 +31,7 @@ function openNursePage(file){
 function renderPageMenu(){
   const box = document.getElementById('pageMenu');
   if(!box) return;
-  const unread = unreadCounts[currentPatientId] || 0;
+  const unread = unreadMap[currentPatientId] || {};
   box.innerHTML = NURSE_PAGES.map(pg => `
     <button type="button" class="page-btn" onclick="openNursePage('${pg.file}')">
       <span class="page-btn-icon">${pg.icon}</span>
@@ -39,7 +39,7 @@ function renderPageMenu(){
         <span class="page-btn-title">${pg.title}</span>
         <span class="page-btn-desc">${pg.desc}</span>
       </span>
-      ${pg.file === 'messages.html' && unread ? `<span class="unread-badge" title="ご家族からの未読メッセージ ${unread}件">未読 ${unread}</span>` : ''}
+      ${unread[pg.target] ? `<span class="unread-dot" role="img" aria-label="未読があります" title="まだ見ていない記録があります"></span>` : ''}
       <span class="page-btn-arrow">›</span>
     </button>`).join('');
 }

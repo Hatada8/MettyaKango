@@ -34,6 +34,8 @@ table.list input[type=checkbox]{ width:16px; height:16px; accent-color:var(--nur
 .master-row{ display:flex; gap:6px; align-items:center; }
 .master-row .num{ width:30px; flex:none; font-size:11px; color:var(--ink-soft); text-align:right; font-family:'JetBrains Mono', monospace; }
 .master-row input{ flex:1; min-width:0; }
+.master-row.with-desc{ flex-wrap:wrap; padding-bottom:6px; border-bottom:1px dashed var(--line); }
+.master-row .desc{ flex:1 1 100%; margin-left:36px; font-size:12px; }
 .master-row select{ width:130px; flex:none; }
 .chip-add{ display:flex; gap:6px; margin-top:12px; max-width:420px; }
 .chip-add input{ flex:1; }
@@ -51,4 +53,10 @@ table.list input[type=checkbox]{ width:16px; height:16px; accent-color:var(--nur
   .card h3{ flex-wrap:wrap; }
   .card h3 .head-tools{ margin-left:0; width:100%; }
   .master-row select{ width:96px; }
+  /* 症状の行：番号を隠して、種別・名前・保存・削除を1行に収める */
+  .master-row.with-desc .num{ display:none; }
+  .master-row.with-desc select{ width:74px; padding-left:6px; padding-right:2px; }
+  .master-row.with-desc input:not(.desc){ min-width:60px; }
+  .master-row.with-desc .small{ padding-left:8px; padding-right:8px; }
+  .master-row .desc{ margin-left:0; }
 }

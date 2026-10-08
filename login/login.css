@@ -75,6 +75,9 @@
   .demo-login button{
     font-size:12px; padding:6px 12px; border-radius:8px; background:#fff; border:1px solid var(--line); color:var(--ink);
   }
+  .demo-login select{
+    flex:1 1 200px; min-width:0; font-size:13px; padding:7px 8px; border-radius:8px; border:1px solid var(--line); background:#fff;
+  }
   .demo-login button:hover{ border-color:var(--nurse); color:var(--nurse-deep); }
 
   /* ---------- login background slideshow ---------- */

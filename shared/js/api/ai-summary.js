@@ -15,38 +15,42 @@ async function getAiSummary(admissionId){
   return rows[0] || null;
 }
 
-/* 家族に見せてよい最新の要約 */
-async function getFamilyAiSummary(patientId){
-  const rows = await db.select('patient_ai_summary',
-    `${AI_SUMMARY_SELECT}&patient_id=eq.${patientId}&family_visible=eq.1&order=generated_at.desc&limit=1`);
-  return rows[0] || null;
+/* source_text 列がまだないとき（add_ai_source_text.sql を実行する前）は、原文なしで保存する */
+async function withOptionalSource(run){
+  try{ return await run(true); }
+  catch(e){
+    if(String(e.body || '').includes('source_text')) return run(false);
+    throw e;
+  }
 }
 
 /* 作成
    ・まだなければ追加 → { row }
    ・すでにあれば：AI_SUMMARY_ONCE が true なら { already: true }、
      false なら新しい文章で上書き（手直し版は消える）→ { row, regenerated: true } */
-async function createAiSummary({ admissionId, patientId, text, employeeId }){
+async function createAiSummary({ admissionId, patientId, text, sourceText = null, employeeId }){
   const existing = await db.select('patient_ai_summary', `select=ai_summary_id&admission_id=eq.${admissionId}`, { includeDeleted: true });
   if(existing.length){
     if(AI_SUMMARY_ONCE) return { already: true };
-    const [row] = await db.update('patient_ai_summary', `admission_id=eq.${admissionId}`, {
+    const [row] = await withOptionalSource(withSource => db.update('patient_ai_summary', `admission_id=eq.${admissionId}`, {
+      ...(withSource ? { source_text: sourceText } : {}),
       generated_text: text,
       generated_by: employeeId,
       generated_at: new Date().toISOString(),
       edited_text: null,
       updated_by: null,
       delete_flag: 0
-    });
+    }));
     return { row, regenerated: true };
   }
   try{
-    const [row] = await db.insert('patient_ai_summary', {
+    const [row] = await withOptionalSource(withSource => db.insert('patient_ai_summary', {
       admission_id: admissionId,
       patient_id: patientId,
+      ...(withSource ? { source_text: sourceText } : {}),
       generated_text: text,
       generated_by: employeeId
-    });
+    }));
     return { row };
   }catch(e){
     // ほぼ同時に別の人が作った場合
@@ -59,10 +63,6 @@ async function saveAiSummaryEdit(summaryId, text, employeeId){
   return db.update('patient_ai_summary', `ai_summary_id=eq.${summaryId}`, { edited_text: text, updated_by: employeeId });
 }
 
-async function setAiSummaryFamilyVisible(summaryId, visible){
-  return db.update('patient_ai_summary', `ai_summary_id=eq.${summaryId}`, { family_visible: visible ? 1 : 0 });
-}
-
 /* 画面に出す文章（手直し版があればそちらを優先） */
 function aiSummaryText(row){
   return row ? (row.edited_text || row.generated_text) : '';
@@ -70,78 +70,44 @@ function aiSummaryText(row){
 
 /* ---------------------------------------------------------
    要約文の作成（デモ）
-   今は外部の AI につながず、データベースの記録をひな形に沿ってまとめます。
+   自由記述の文章から、大事そうな文を選んで短くまとめます。
+   今は外部の AI につながず、この端末の中だけで計算しています。
    本物の AI に替えるときは、この関数の中身だけを差し替えれば OK です。
    --------------------------------------------------------- */
-async function generateAiSummaryText({ patient, current, admissions, symptoms, handoverMemos }){
-  const lines = [];
-  const age = calcAge(patient.birth_date);
+const SUMMARY_RATIO = 0.4;   // もとの文章の何割くらいにまとめるか
+const SUMMARY_KEYWORDS = /熱|痛|血圧|脈|食事|食欲|摂取|割|排泄|便|尿|睡眠|眠|転倒|ふらつ|歩行|リハビリ|服薬|薬|点滴|傷|創|咳|痰|呼吸|酸素|不穏|混乱|訴え|家族|面会|拒否|注意|必要|確認|介助|嘔吐|吐き気|むくみ|浮腫|様子|変化/g;
 
-  // 基本情報
-  lines.push('【基本情報】');
-  lines.push(`${patient.patient_name}さん（${age != null ? age + '歳・' : ''}${masterName('sex', patient.sex_id)}）`);
-  const place = [masterName('department', current.department_id), current.room_no ? `${current.room_no}号室` : '',
-    current.employee_master ? `主治医：${current.employee_master.employee_name}` : ''].filter(Boolean).join('／');
-  if(place) lines.push(place);
-  lines.push(`${fmtDate(current.admitted_on)} 入院（今日で${dayOfStay(current.admitted_on)}日目）`);
+/* 文字数（空白と改行は数えない） */
+function countChars(str){
+  return String(str || '').replace(/\s/g, '').length;
+}
 
-  // 診断名・アレルギー・既往歴
-  const byType = typeId => symptoms.filter(s => s.symptom_master && s.symptom_master.symptom_type_id === typeId);
-  const symptomLabel = s => s.symptom_master.symptom_name + (s.onset_on ? `（${fmtDate(s.onset_on)}）` : '');
-  lines.push('', '【診断名・アレルギー・既往歴】');
-  lines.push(`診断名：${byType(SYMPTOM_TYPE.DIAGNOSIS).map(symptomLabel).join('、') || 'なし'}`);
-  lines.push(`アレルギー：${byType(SYMPTOM_TYPE.ALLERGY).map(symptomLabel).join('、') || 'なし'}`);
-  lines.push(`既往歴：${byType(SYMPTOM_TYPE.HISTORY).map(symptomLabel).join('、') || 'なし'}`);
-
-  // 病歴・入院歴・治療歴（入院記録と申し送りを日付順に並べる）
-  const events = [];
-  admissions.forEach(a => {
-    events.push({ date: a.admitted_on, text: `入院（${masterName('department', a.department_id) || '診療科未設定'}）` });
-    if(a.discharged_on) events.push({ date: a.discharged_on, text: '退院' });
-  });
-  handoverMemos.forEach(m => {
-    const gist = memoGist(m.content);
-    if(gist) events.push({ date: m.created_at, text: gist });
-  });
-  events.sort((x, y) => new Date(x.date) - new Date(y.date));
-  lines.push('', '【病歴・入院歴・治療歴】');
-  if(events.length){
-    events.slice(-12).forEach(ev => lines.push(`${fmtDate(new Date(ev.date).toLocaleDateString('sv-SE', { timeZone: TZ }))}　${ev.text}`));
-  }else{
-    lines.push('記録なし');
-  }
-
-  // 現在の状態
-  lines.push('', '【現在の状態】');
-  lines.push(`状態：${masterName('conditionLevel', current.condition_level_id)}`);
-  if(current.care_note) lines.push(`注意事項：${current.care_note}`);
-
-  // 申し送りの要点（メモの中の【申し送り】の行）
-  const todos = handoverMemos
-    .map(m => (String(m.content).split('\n').find(l => l.trim().startsWith('【申し送り】')) || '').replace('【申し送り】', '').trim())
+async function generateAiSummaryText({ sourceText }){
+  const text = String(sourceText || '').replace(/\r/g, '').trim();
+  const sentences = text.split(/(?<=[。！？!?])|\n+/)
+    .map(s => s.replace(/[。]+$/, '').replace(/(なんか|えーと|あの、|とにかく|やはり|ちなみに)/g, '').trim())
     .filter(Boolean);
-  if(todos.length){
-    lines.push('', '【申し送りの要点】');
-    todos.slice(0, 5).forEach(t => lines.push(`・${t}`));
+
+  let chosen = sentences;
+  if(sentences.length > 1){
+    const total = sentences.reduce((n, s) => n + countChars(s), 0);
+    const target = Math.max(30, Math.round(total * SUMMARY_RATIO));
+    const ranked = sentences.map((s, i) => ({
+      s, i,
+      score: 1 + Math.min((s.match(SUMMARY_KEYWORDS) || []).length, 3) * 1.5 + (/\d/.test(s) ? 1 : 0) + (i === 0 ? 1 : 0) + (i === sentences.length - 1 ? 0.5 : 0)
+    })).sort((a, b) => (b.score - a.score) || (a.i - b.i));
+
+    const picked = [];
+    let len = 0;
+    for(const r of ranked){
+      if(len >= target) break;
+      picked.push(r);
+      len += countChars(r.s);
+    }
+    chosen = picked.sort((a, b) => a.i - b.i).map(r => r.s);
   }
 
   // 本物の AI のような「考えている時間」を少しだけ置く
-  await new Promise(r => setTimeout(r, 900));
-  return lines.join('\n');
-}
-
-/* メモ本文から 1 行の要点を作る */
-function memoGist(content){
-  const rows = String(content || '').split('\n').map(s => s.trim()).filter(Boolean);
-  if(!rows.length) return '';
-  const firstSentence = s => s.split('。')[0];
-  const cut = s => (s.length > 60 ? s.slice(0, 60) + '…' : s);
-
-  let head = rows[0];
-  const m = head.match(/^【(.+?)】(.*)$/);
-  if(m) head = m[2] ? `${m[1]}：${firstSentence(m[2])}` : m[1];
-  else head = firstSentence(head);
-
-  const treat = rows.find(r => r.startsWith('【処置】'));
-  return cut(head + (treat ? `。処置：${firstSentence(treat.replace('【処置】', ''))}` : ''));
+  await new Promise(r => setTimeout(r, 700));
+  return chosen.map(s => `・${s}`).join('\n');
 }

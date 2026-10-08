@@ -2,7 +2,7 @@
 let currentPatientId = null;
 let admitted = [];              // 入院中の患者（admission ＋ patient_master）
 let favoriteIds = new Set();    // 自分のお気に入り（patient_id）
-let unreadCounts = {};          // patient_id → ご家族からの未読の数
+let unreadMap = {};             // patient_id → { 読んでいないページの番号: true }（READ_TARGET）
 let detail = null;              // 表示中の患者 { patient, admissions, current }
 let symptoms = [];              // 表示中の患者の症状
 let nursePollTimer = null;      // 表示中の患者のチャット更新

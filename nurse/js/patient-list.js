@@ -1,10 +1,10 @@
 /* 看護師画面：患者一覧（サイドバー）・お気に入り */
 async function loadPatientList(){
   try{
-    [admitted, favoriteIds, unreadCounts] = await Promise.all([
+    [admitted, favoriteIds, unreadMap] = await Promise.all([
       listAdmittedPatients(),
       listFavoritePatientIds(session.employeeId),
-      unreadCountsForStaff()
+      unreadByPatient(session.employeeId)
     ]);
   }catch(e){
     showError(e, '患者一覧を読み込めませんでした');
@@ -17,7 +17,7 @@ function patientItemHtml(a){
   const p = a.patient_master;
   const fav = favoriteIds.has(p.patient_id);
   const age = calcAge(p.birth_date);
-  const unread = unreadCounts[p.patient_id] || 0;
+  const unread = hasUnread(unreadMap, p.patient_id);
   return `
     <div class="patient-item ${p.patient_id === currentPatientId ? 'active' : ''}" onclick="renderPatient(${p.patient_id})">
       <button type="button" class="fav-star ${fav ? 'on' : ''}" aria-pressed="${fav}"
@@ -28,8 +28,7 @@ function patientItemHtml(a){
         <div class="name">${escapeHtml(p.patient_name)}</div>
         <div class="room">${escapeHtml(a.room_no ?? '—')}号室・${age != null ? escapeHtml(age) + '歳・' : ''}ID:${escapeHtml(p.patient_no)}</div>
       </div>
-      ${unread ? `<span class="unread-badge" title="ご家族からの未読メッセージ ${unread}件">💬${unread}</span>` : ''}
-      <div class="flag ${FLAG_CLASS[a.condition_level_id] || 'low'}" title="${escapeHtml(masterName('conditionLevel', a.condition_level_id))}"></div>
+      ${unread ? `<span class="unread-dot" role="img" aria-label="未読があります" title="まだ見ていない記録があります"></span>` : ''}
     </div>`;
 }
 
@@ -65,8 +64,25 @@ function renderPatientList(){
   let html = '';
   if(favs.length) html += `<div class="list-group">★ お気に入り</div>` + favs.map(patientItemHtml).join('');
   if(others.length) html += (favs.length ? `<div class="list-group">そのほか</div>` : '') + others.map(patientItemHtml).join('');
+  const wrap = document.getElementById('patientListWrap');
+  const keepScroll = wrap ? wrap.scrollTop : 0; // 定期更新でスクロール位置が戻らないように
   list.innerHTML = html;
+  limitListHeight();
+  if(wrap) wrap.scrollTop = keepScroll;
 }
+
+/* 5人より多いときは、5人ぶんの高さで止めて、一覧の中だけスクロールさせる */
+const LIST_VISIBLE_ROWS = 5;
+function limitListHeight(){
+  const wrap = document.getElementById('patientListWrap');
+  if(!wrap) return;
+  const items = wrap.querySelectorAll('.patient-item');
+  if(items.length <= LIST_VISIBLE_ROWS){ wrap.style.maxHeight = ''; return; }
+  const last = items[LIST_VISIBLE_ROWS - 1];
+  const bottom = last.getBoundingClientRect().bottom - wrap.getBoundingClientRect().top + wrap.scrollTop;
+  wrap.style.maxHeight = Math.ceil(bottom + 4) + 'px';
+}
+window.addEventListener('resize', limitListHeight);
 
 async function toggleFavorite(patientId){
   const on = !favoriteIds.has(patientId);

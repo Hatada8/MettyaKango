@@ -19,7 +19,7 @@ mecchakango/
 │        patient-detail.js（プロフィール・4つのボタン・管理者の操作） / sub-page.js（各ページ共通の起動）
 │        ai-summary.js（AI要約） / memos.js（申し送り・プライベートメモ） / chat.js（家族とのメッセージ）
 ├ family/               ← 家族用
-│  └ js/  main.js（様子・AI要約・お知らせ） / chat.js（メッセージ） / state.js
+│  └ js/  main.js（様子・病状のキーワード） / chat.js（メッセージ） / state.js
 ├ admin/                ← 管理用（管理者だけ）
 │  └ js/  main.js / employees.js（職員） / masters.js（マスタ・権限） / patients.js（患者さん）
 ├ shared/               ← 全画面で共通
@@ -38,8 +38,10 @@ mecchakango/
 | 患者一覧・お気に入り（★で上に固定） | 職員みんな（お気に入りは職員ごと） |
 | 申し送りメモ（ひとことで記録） | 職員みんな |
 | プライベートメモ（趣味・好きなものなど） | 職員みんな |
-| AI要約（今は何回でも作り直せる・手直しできる） | 職員みんな |
+| AI要約（自由記述を書いて要約。もとの文章と要約の文字数を比べられる。今は何回でも作り直せる・手直しできる） | 職員みんな |
 | ご家族とのメッセージ | 職員・ご家族 |
+| 未読の点（患者一覧の名前の右と、AI要約・メモ・メッセージの各カードの右。他の人が書いた記録を、自分がまだ見ていないとき） | 職員ごと |
+| 病状のキーワード（診断名・既往歴をタップすると説明が出る。説明は管理画面の「マスタ」→「症状」で編集） | ご家族 |
 | 患者の新規登録・修正・退院・削除、メモの削除 | 管理者だけ |
 | 職員の管理・マスタ（分野・役割・症状・権限）の編集 | 管理者だけ |
 
@@ -47,6 +49,12 @@ mecchakango/
 
 AI要約を「1回の入院につき1回だけ」に戻すときは、`shared/js/api/ai-summary.js` の
 `AI_SUMMARY_ONCE` を `true` にします（v2 は `v2/shared/js/api/ai-summary.js`）。
+
+## はじめに（追加分）
+
+未読の点と病状の説明を使うには、Supabase の SQL Editor で [v2/db/add_read_status_and_symptom_info.sql](v2/db/add_read_status_and_symptom_info.sql) を1回実行してください（何回実行しても大丈夫です。既存のテーブルは消しません）。
+実行する前でも画面は動きますが、点は出ず、病状の説明は「まだ登録されていません」になります。
+AI要約の「自由記述」を一緒に保存して文字数を比べるには、[v2/db/add_ai_source_text.sql](v2/db/add_ai_source_text.sql) も1回実行してください（実行前は、要約は作れますが、もとの文章は保存されません）。
 
 ## デモ用ログイン
 
@@ -56,4 +64,4 @@ AI要約を「1回の入院につき1回だけ」に戻すときは、`shared/js
 ## 公開する前に
 
 - 今は公開キー（anon key）でそのまま読み書きしているため、権限の制限は画面の中だけのものです。本番では Supabase Auth と RLS のルールで守ってください。
-- AI要約は、記録をひな形に沿ってまとめる「デモ」です。本物の AI に替えるときは `shared/js/api/ai-summary.js` の `generateAiSummaryText` を差し替えます。
+- AI要約は、自由記述から大事そうな文を選んで短くする「デモ」です。本物の AI に替えるときは `shared/js/api/ai-summary.js` の `generateAiSummaryText` を差し替えます。

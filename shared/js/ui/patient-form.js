@@ -2,6 +2,31 @@
    mode：'create' 新規登録 / 'edit' 修正 / 'readmit' 再入院
    診断名・アレルギー・既往歴は文字で入力し、「、」で区切ると複数登録できます。
    入力した名前は症状マスタ（symptom_master）にも自動で登録されます。 */
+/* ---- 主治医の選びかた：分野で絞り込み → 名前で検索 → プルダウンで選ぶ ---- */
+let patientFormDoctors = [];
+let patientFormDoctorId = null;   // フォームを開いたときの主治医（絞り込みで消えないようにする）
+
+function filterDoctorOptions(){
+  const select = document.getElementById('doctorSelect');
+  if(!select) return;
+  const deptId = Number(document.querySelector('[name=department_id]')?.value) || null;
+  const all = document.getElementById('doctorAllDept').checked || !deptId;
+  const q = document.getElementById('doctorSearch').value.replace(/s/g, '').toLowerCase();
+  const chosen = select.value ? Number(select.value) : patientFormDoctorId;
+
+  const list = patientFormDoctors.filter(d =>
+    (all || d.department_id === deptId) &&
+    (!q || (d.employee_name + (d.employee_kana || '')).replace(/s/g, '').toLowerCase().includes(q)));
+  // 選んでいる医師は、絞り込みで外れても残す
+  const keep = patientFormDoctors.find(d => d.employee_id === chosen);
+  if(keep && !list.includes(keep)) list.unshift(keep);
+
+  select.innerHTML = '<option value="">未定</option>' + list.map(d =>
+    `<option value="${d.employee_id}" ${d.employee_id === chosen ? 'selected' : ''}>${esc(d.employee_name)}（${esc(masterName('department', d.department_id))}）</option>`).join('');
+  document.getElementById('doctorHint').textContent =
+    `${all ? '全分野' : masterName('department', deptId)}の医師：${list.length}人${q ? '（検索中）' : ''}`;
+}
+
 async function openPatientForm({ mode = 'create', detail = null, symptoms = [], onDone } = {}){
   const needPerm = mode === 'edit' ? 'can_patient_update' : 'can_patient_create';
   if(!can(needPerm)){ showToast('この操作は管理者だけができます'); return; }
@@ -23,6 +48,9 @@ async function openPatientForm({ mode = 'create', detail = null, symptoms = [], 
   const symptomNames = typeId => symptoms
     .filter(s => s.symptom_master && s.symptom_master.symptom_type_id === typeId)
     .map(s => s.symptom_master.symptom_name).join('、');
+
+  patientFormDoctors = doctors;
+  patientFormDoctorId = a.doctor_employee_id || null;
 
   const title = { create: '新規患者を登録', edit: '患者情報を修正', readmit: '再入院を登録' }[mode];
 
@@ -51,11 +79,13 @@ async function openPatientForm({ mode = 'create', detail = null, symptoms = [], 
         <label class="form-item"><span>部屋番号</span><input class="f-input" name="room_no" inputmode="numeric" value="${esc(a.room_no ?? '')}" placeholder="例：305"></label>
       </div>
       <div class="form-grid">
-        <label class="form-item"><span>分野（診療科）</span><select class="f-input" name="department_id">${masterOptions('department', a.department_id, { blank: '選択してください' })}</select></label>
-        <label class="form-item"><span>主治医</span><select class="f-input" name="doctor_employee_id">
-          <option value="">未定</option>
-          ${doctors.map(d => `<option value="${d.employee_id}" ${d.employee_id === a.doctor_employee_id ? 'selected' : ''}>${esc(d.employee_name)}（${esc(masterName('department', d.department_id))}）</option>`).join('')}
-        </select></label>
+        <label class="form-item"><span>分野（診療科）</span><select class="f-input" name="department_id" onchange="filterDoctorOptions()">${masterOptions('department', a.department_id, { blank: '選択してください' })}</select></label>
+        <div class="form-item doctor-picker"><span>主治医（分野で絞り込み → 名前で検索 → 選ぶ）</span>
+          <input class="f-input" type="search" id="doctorSearch" placeholder="🔍 医師の名前・ふりがなで検索" autocomplete="off" oninput="filterDoctorOptions()">
+          <select class="f-input" name="doctor_employee_id" id="doctorSelect"></select>
+          <label class="check doctor-all"><input type="checkbox" id="doctorAllDept" onchange="filterDoctorOptions()"> 他の分野の医師も表示する</label>
+          <small class="muted" id="doctorHint"></small>
+        </div>
       </div>
       <label class="form-item"><span>今の状態</span><select class="f-input" name="condition_level_id">${masterOptions('conditionLevel', a.condition_level_id || 1)}</select></label>
       <label class="form-item"><span>注意事項</span><textarea class="f-input" name="care_note" placeholder="例：転倒リスクあり">${esc(a.care_note)}</textarea></label>
@@ -66,6 +96,7 @@ async function openPatientForm({ mode = 'create', detail = null, symptoms = [], 
         <label class="form-item"><span>${esc(t.symptom_type_name)}（複数あるときは「、」で区切る）</span>
           <input class="f-input" name="symptom_${t.symptom_type_id}" value="${esc(symptomNames(t.symptom_type_id))}"
             placeholder="${t.symptom_type_id === SYMPTOM_TYPE.ALLERGY ? 'なければ空のまま' : ''}"></label>`).join('')}`,
+    onOpen: () => filterDoctorOptions(),
     onSubmit: async form => {
       const f = new FormData(form);
       const patientRow = showPatient ? {

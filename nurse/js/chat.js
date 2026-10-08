@@ -28,11 +28,8 @@ async function refreshNurseChat(){
       chat.scrollTop = chat.scrollHeight;
     }
 
-    // ご家族からの未読を既読にする
-    if(msgs.some(m => m.family_id && !m.read_flag)){
-      await markChatRead(id, 'staff');
-      if(unreadCounts[id]){ delete unreadCounts[id]; if(typeof renderPatientList === 'function') renderPatientList(); }
-    }
+    // 開いている間に届いたメッセージも、見たことにする
+    if(msgs.some(m => m.family_id)) await markRead(session.employeeId, id, READ_TARGET.MESSAGES);
   }catch(e){ showError(e, 'メッセージを読み込めませんでした'); }
 }
 

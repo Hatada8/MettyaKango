@@ -1,6 +1,6 @@
 /* 入力用のポップアップ（モーダル）
    openModal({ title, body: 'HTML', submitLabel, onSubmit: async (form) => true で閉じる }) */
-function openModal({ title, body, submitLabel = '保存する', onSubmit, danger = false }){
+function openModal({ title, body, submitLabel = '保存する', onSubmit, onOpen, danger = false }){
   closeModal();
   const wrap = document.createElement('div');
   wrap.id = 'modal';
@@ -34,6 +34,7 @@ function openModal({ title, body, submitLabel = '保存する', onSubmit, danger
       btn.disabled = false;
     }
   });
+  if(onOpen) onOpen(form);
   const first = form.querySelector('input, select, textarea');
   if(first) first.focus();
   return form;

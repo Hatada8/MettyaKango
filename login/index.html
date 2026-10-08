@@ -58,9 +58,8 @@
       <!-- ▼▼▼ デモ用のかんたんログイン（あとで消す：この div と js/demo-login.js を削除） ▼▼▼ -->
       <div class="demo-login">
         <span>デモ用かんたんログイン</span>
-        <button type="button" onclick="demoLogin('admin')">管理者</button>
-        <button type="button" onclick="demoLogin('nurse')">看護師（一般）</button>
-        <button type="button" onclick="demoLogin('family')">ご家族</button>
+        <select id="demoSelect" aria-label="デモ用のアカウント" onchange="if(this.value) demoLoginSelected()"><option value="">読み込み中…</option></select>
+        <button type="button" onclick="demoLoginSelected()">ログイン</button>
       </div>
       <!-- ▲▲▲ デモ用ここまで ▲▲▲ -->
 

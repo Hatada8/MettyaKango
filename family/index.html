@@ -31,17 +31,15 @@
           <h2 id="familyPatientName">読み込み中…</h2>
           <p id="familyPatientMeta"></p>
         </div>
-        <span class="family-state" id="familyState"></span>
       </div>
 
       <div class="card">
-        <h3><span class="n">●</span> 今日の様子（看護師のAI要約より）
-          <button onclick="refreshFamilyPage()" class="refresh-btn">更新</button>
-        </h3>
-        <div class="ai-summary show" style="margin-top:0;" id="familyAiSummaryBox">
-          <span class="tag">読み込み中…</span>
-        </div>
+        <h3><span class="n">●</span> 病状について</h3>
+        <p class="muted keyword-hint">気になる言葉をタップすると、説明が表示されます。</p>
+        <div class="keyword-list" id="keywordList"><span class="muted">読み込み中…</span></div>
+        <div class="keyword-detail hidden" id="keywordDetail" aria-live="polite"></div>
       </div>
+
 
       <div class="card">
         <h3>💬 病棟とのメッセージ</h3>

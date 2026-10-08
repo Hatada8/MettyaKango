@@ -1,9 +1,11 @@
-/* 看護師画面：AI要約
-   ・今は何回でも作り直せる（AI_SUMMARY_ONCE を true にすると、1 回の入院につき 1 回だけになる）
-   ・作成後は手直しして保存できる（作り直すと、手直しした文章は新しい要約で上書きされる）
-   ・「ご家族にも表示する」にチェックすると家族画面にも出る */
+/* 看護師画面：AI要約（自由記述 → 要約）
+   ・自由記述の文章を書いて「要約する」を押すと、短くまとめた文章ができる
+   ・もとの文章と要約の文字数を並べて比べられる
+   ・作成後は要約を手直しして保存できる（作り直すと、手直しした文章は新しい要約で上書きされる）
+   ・今は何回でも作り直せる（AI_SUMMARY_ONCE を true にすると、1 回の入院につき 1 回だけになる） */
 let aiSummary = null;
 let aiEditing = false;
+let aiSourceUsed = '';   // 直前に要約したときの自由記述（原文を保存する列がまだないときの代わり）
 
 async function loadAiSummary(){
   const stay = currentStay();
@@ -17,66 +19,87 @@ async function loadAiSummary(){
   renderAiSummary();
 }
 
-function aiButtonHtml(label){
+/* 文字数の比べ方（もとの文章 → 要約） */
+function countCompareHtml(sourceText, summaryText, edited){
+  const sum = countChars(summaryText);
+  if(!sourceText) return `<div class="ai-compare">要約：<b>${sum}</b>文字${edited ? '（手直し後）' : ''}</div>`;
+  const src = countChars(sourceText);
+  const pct = src ? Math.round(sum / src * 100) : 0;
   return `
-    <button class="ai-btn" id="aiBtn" onclick="runAI()">
-      <span class="spin"></span>
-      ${label}
-    </button>`;
+    <div class="ai-compare">
+      <span>自由記述 <b>${src}</b>文字</span>
+      <span class="arrow">→</span>
+      <span>要約${edited ? '（手直し後）' : ''} <b>${sum}</b>文字</span>
+      <span class="ratio">${pct}%（${src - sum >= 0 ? `${src - sum}文字減` : `${sum - src}文字増`}）</span>
+    </div>`;
+}
+
+function updateSourceCount(){
+  const el = document.getElementById('aiSource');
+  const out = document.getElementById('aiSourceCount');
+  if(el && out) out.textContent = `${countChars(el.value)}文字`;
 }
 
 function renderAiSummary(){
   const area = document.getElementById('aiArea');
   if(!area) return;
 
-  if(!aiSummary){
-    if(!detail.current){
-      area.innerHTML = '<div class="empty">退院済みのため、新しい要約は作成できません。</div>';
-      return;
-    }
-    area.innerHTML = `
-      <p class="muted" style="margin:0;">
-        これまでの記録（基本情報・診断・入院歴・申し送りメモ）を、ひな形に沿ってまとめます。<br>
-        ${AI_SUMMARY_ONCE
-          ? '<b>このボタンは、この入院中に1回だけ押せます。</b>作成したあとは、文章を手直しして保存できます。'
-          : '作成したあとは、文章を手直しして保存できます。記録が増えたら、何回でも作り直せます。'}
-      </p>
-      ${aiButtonHtml('✨ AIで要約する')}`;
-    return;
+  const canMake = !!detail.current && (!aiSummary || !AI_SUMMARY_ONCE);
+  const typed = document.getElementById('aiSource');
+  const sourceValue = typed ? typed.value : (aiSummary && aiSummary.source_text) || '';
+
+  let html = '';
+  if(canMake){
+    html += `
+      <label class="ai-label" for="aiSource">自由記述（今日の様子・気づいたことを、思いつくままに書いてください）</label>
+      <textarea class="memo-input" id="aiSource" rows="7" oninput="autoGrow(this); updateSourceCount()"
+        placeholder="例：朝食は5割ほど摂取。9時に37.8℃の発熱があり、解熱剤を使用した。ご本人から腰の痛みの訴えがあった。午後はリハビリで歩行器を使って廊下を一周できた。">${escapeHtml(sourceValue)}</textarea>
+      <div class="ai-count">書いた文章：<span id="aiSourceCount">0文字</span><span class="muted">（空白・改行は数えません）</span></div>
+      <button class="ai-btn" id="aiBtn" onclick="runAI()">
+        <span class="spin"></span>
+        ✨ ${aiSummary ? 'もう一度要約する' : '要約する'}
+      </button>`;
+  }else if(!aiSummary){
+    html += '<div class="empty">退院済みのため、新しい要約は作成できません。</div>';
   }
 
-  const s = aiSummary;
-  const meta = [`作成：${fmtDateTime(s.generated_at, true)}（${s.generator ? s.generator.employee_name : '—'}）`];
-  if(s.edited_text) meta.push(`手直し：${fmtDateTime(s.updated_at, true)}（${s.editor ? s.editor.employee_name : '—'}）`);
-  const canRegenerate = !AI_SUMMARY_ONCE && !!detail.current && !aiEditing;
+  if(aiSummary){
+    const s = aiSummary;
+    const meta = [`作成：${fmtDateTime(s.generated_at, true)}（${s.generator ? s.generator.employee_name : '—'}）`];
+    if(s.edited_text) meta.push(`手直し：${fmtDateTime(s.updated_at, true)}（${s.editor ? s.editor.employee_name : '—'}）`);
+    html += `
+      <div class="ai-summary show" style="margin-top:18px;">
+        <span class="tag">AI要約結果</span>
+        ${aiEditing
+          ? `<textarea class="memo-input ai-edit" id="aiEditText">${escapeHtml(aiSummaryText(s))}</textarea>`
+          : `<div class="ai-text">${escapeHtml(aiSummaryText(s))}</div>`}
+        <div class="ai-meta">${meta.map(escapeHtml).join('　／　')}</div>
+      </div>
+      ${countCompareHtml(s.source_text || aiSourceUsed, aiSummaryText(s), !!s.edited_text)}
+      <div class="ai-actions">
+        ${aiEditing
+          ? `<button type="button" class="save-btn" onclick="saveAiEdit()">保存する</button>
+             <button type="button" class="mini-btn" onclick="aiEditing = false; renderAiSummary()">やめる</button>`
+          : `<button type="button" class="mini-btn" onclick="aiEditing = true; renderAiSummary()">✎ 手直しする</button>`}
+      </div>
+      ${s.edited_text ? `
+        <details class="ai-original">
+          <summary>AIが作った元の要約を見る</summary>
+          <div class="ai-text">${escapeHtml(s.generated_text)}</div>
+        </details>` : ''}`;
+  }
 
-  area.innerHTML = `
-    <div class="ai-summary show" style="margin-top:0;">
-      <span class="tag">AI要約結果${AI_SUMMARY_ONCE ? '（この入院では作成済み・作成は1回だけ）' : ''}</span>
-      ${aiEditing
-        ? `<textarea class="memo-input ai-edit" id="aiEditText">${escapeHtml(aiSummaryText(s))}</textarea>`
-        : `<div class="ai-text">${escapeHtml(aiSummaryText(s))}</div>`}
-      <div class="ai-meta">${meta.map(escapeHtml).join('　／　')}</div>
-    </div>
-    <div class="ai-actions">
-      ${aiEditing
-        ? `<button type="button" class="save-btn" onclick="saveAiEdit()">保存する</button>
-           <button type="button" class="mini-btn" onclick="aiEditing = false; renderAiSummary()">やめる</button>`
-        : `<button type="button" class="mini-btn" onclick="aiEditing = true; renderAiSummary()">✎ 手直しする</button>`}
-      <label class="check"><input type="checkbox" ${s.family_visible ? 'checked' : ''} onchange="toggleAiFamily(this.checked)"> ご家族にも表示する</label>
-    </div>
-    ${canRegenerate ? aiButtonHtml('✨ もう一度要約する') : ''}
-    ${s.edited_text ? `
-      <details class="ai-original">
-        <summary>AIが作った元の文章を見る</summary>
-        <div class="ai-text">${escapeHtml(s.generated_text)}</div>
-      </details>` : ''}`;
-
+  area.innerHTML = html;
+  const src = document.getElementById('aiSource');
+  if(src){ autoGrow(src); updateSourceCount(); }
   if(aiEditing) autoGrow(document.getElementById('aiEditText'));
 }
 
 async function runAI(){
   if(!detail.current) return;
+  const sourceText = document.getElementById('aiSource').value.trim();
+  if(!sourceText){ showToast('自由記述を入力してください'); return; }
+
   // 作り直すと手直しした文章は消えるので、確認する
   if(aiSummary && aiSummary.edited_text){
     const ok = await confirmModal({
@@ -90,21 +113,13 @@ async function runAI(){
   btn.classList.add('loading');
   btn.disabled = true;
   try{
-    const [allSymptoms, handoverMemos] = await Promise.all([
-      listPatientSymptoms(currentPatientId),
-      listMemos(currentPatientId, MEMO_TYPE.HANDOVER)
-    ]);
-    const text = await generateAiSummaryText({
-      patient: detail.patient,
-      current: detail.current,
-      admissions: detail.admissions,
-      symptoms: allSymptoms,
-      handoverMemos
-    });
+    const text = await generateAiSummaryText({ sourceText });
+    aiSourceUsed = sourceText;
     const result = await createAiSummary({
       admissionId: detail.current.admission_id,
       patientId: currentPatientId,
       text,
+      sourceText,
       employeeId: session.employeeId
     });
     if(result.already) showToast('この入院のAI要約はすでに作成されています');
@@ -125,15 +140,4 @@ async function saveAiEdit(){
     showToast('保存しました');
     await loadAiSummary();
   }catch(e){ showError(e, '保存できませんでした'); }
-}
-
-async function toggleAiFamily(visible){
-  try{
-    await setAiSummaryFamilyVisible(aiSummary.ai_summary_id, visible);
-    aiSummary.family_visible = visible ? 1 : 0;
-    showToast(visible ? 'ご家族の画面にも表示します' : 'ご家族の画面には表示しません');
-  }catch(e){
-    showError(e, '保存できませんでした');
-    renderAiSummary();
-  }
 }
