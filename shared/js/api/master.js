@@ -11,7 +11,9 @@ const MASTER_DEFS = {
   department:     { table: 'department_master',      id: 'department_id',      name: 'department_name',      label: '分野' },
   symptom:        { table: 'symptom_master',         id: 'symptom_id',         name: 'symptom_name',         label: '症状' },
   // optional：add_hospital_master.sql を実行する前でも、ほかの画面が止まらないようにする
-  hospital:       { table: 'hospital_master',        id: 'hospital_id',        name: 'hospital_name',        label: '病院', optional: true }
+  hospital:       { table: 'hospital_master',        id: 'hospital_id',        name: 'hospital_name',        label: '病院', optional: true },
+  interviewType:   { table: 'interview_type_master',   id: 'interview_type_id',   name: 'interview_type_name',   label: '面談の種類', optional: true },
+  interviewStatus: { table: 'interview_status_master', id: 'interview_status_id', name: 'interview_status_name', label: '面談の状態', optional: true }
 };
 
 /* よく使う番号（区分マスタの値） */

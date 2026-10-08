@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../shared/css/base.css">
 <link rel="stylesheet" href="../shared/css/components.css">
+<link rel="stylesheet" href="../shared/css/calendar.css">
 <link rel="stylesheet" href="family.css">
 </head>
 <body>
@@ -40,6 +41,18 @@
         <div class="keyword-detail hidden" id="keywordDetail" aria-live="polite"></div>
       </div>
 
+
+      <div class="card" id="interviewCard">
+        <h3>📅 面談の予約</h3>
+        <p class="iv-closed hidden" id="interviewClosedNote">退院されたため、新しい面談の予約はできません。</p>
+        <div id="interviewBooking">
+          <p class="muted" style="margin-top:-6px;">ご希望の日（平日・明日以降）を選び、空いている時間をお選びください。病棟が確認すると「確定」になります。</p>
+          <div id="interviewCalendar"></div>
+          <div class="iv-panel hidden" id="interviewPanel"></div>
+        </div>
+        <h4 style="margin:18px 0 0; font-size:13px;">ご予約の状況</h4>
+        <div id="myInterviews"></div>
+      </div>
 
       <div class="card">
         <h3>💬 病棟とのメッセージ</h3>
@@ -74,8 +87,11 @@
 <script src="../shared/js/api/memo.js"></script>
 <script src="../shared/js/api/ai-summary.js"></script>
 <script src="../shared/js/api/chat.js"></script>
+<script src="../shared/js/api/interview.js"></script>
+<script src="../shared/js/ui/calendar.js"></script>
 <script src="js/state.js"></script>
 <script src="js/chat.js"></script>
+<script src="js/interviews.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

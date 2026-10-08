@@ -22,6 +22,7 @@ const NURSE_PAGES = [
   { file: 'ai-summary.html',   target: READ_TARGET.AI_SUMMARY,   icon: '✨', title: 'AI要約',         desc: 'これまでの記録をまとめます' },
   { file: 'handover.html',     target: READ_TARGET.HANDOVER,     icon: '🗒️', title: '申し送りメモ',   desc: '今日のことを短く記録します' },
   { file: 'private-memo.html', target: READ_TARGET.PRIVATE_MEMO, icon: '🌱', title: 'プライベートメモ', desc: '趣味・好きなものなど' },
+  { file: 'interviews.html',   target: READ_TARGET.INTERVIEWS,   icon: '📅', title: '面談予定',        desc: 'ご家族の面談の予約を確認します' },
   { file: 'messages.html',     target: READ_TARGET.MESSAGES,     icon: '💬', title: 'メッセージ',      desc: 'ご家族とやりとりします' }
 ];
 

@@ -4,7 +4,7 @@
    最後に見た日時は、データベース側のトリガーが現在時刻を入れます。 */
 
 /* 番号（read_target_master） */
-const READ_TARGET = { AI_SUMMARY: 1, HANDOVER: 2, PRIVATE_MEMO: 3, MESSAGES: 4 };
+const READ_TARGET = { AI_SUMMARY: 1, HANDOVER: 2, PRIVATE_MEMO: 3, MESSAGES: 4, INTERVIEWS: 5 };
 
 /* 古い記録は未読に数えない（毎回の読み込みを軽くするため） */
 const UNREAD_DAYS = 30;
@@ -21,7 +21,7 @@ async function markRead(employeeId, patientId, targetId){
 /* 患者ごとの未読を調べる → { patient_id: { 1: true, 2: true, ... } }（未読があるものだけ） */
 async function unreadByPatient(employeeId){
   const since = new Date(Date.now() - UNREAD_DAYS * 86400000).toISOString();
-  let reads, memos, chats, sums;
+  let reads, memos, chats, sums, interviews;
   try{
     [reads, memos, chats, sums] = await Promise.all([
       db.select('staff_read_status', `select=patient_id,target_id,last_read_at&employee_id=eq.${employeeId}`),
@@ -33,6 +33,11 @@ async function unreadByPatient(employeeId){
     console.warn('未読を調べられませんでした（add_read_status_and_symptom_info.sql を実行しましたか？）', e);
     return {};
   }
+
+  // 面談の申込み（add_interview.sql を実行する前でも、ほかの未読は調べられるようにする）
+  try{
+    interviews = await db.select('interview_appointment', `select=patient_id,created_at&family_id=not.is.null&created_at=gt.${since}`);
+  }catch(e){ interviews = []; }
 
   const lastRead = {};
   reads.forEach(r => { lastRead[`${r.patient_id}:${r.target_id}`] = new Date(r.last_read_at).getTime(); });
@@ -51,6 +56,7 @@ async function unreadByPatient(employeeId){
     if(target) check(m.patient_id, target, m.created_at);
   });
   chats.forEach(c => check(c.patient_id, READ_TARGET.MESSAGES, c.created_at));
+  interviews.forEach(i => check(i.patient_id, READ_TARGET.INTERVIEWS, i.created_at));
   sums.forEach(s => {
     // 他の人が作った・作り直した、または手直しした要約
     if(s.generated_by !== employeeId) check(s.patient_id, READ_TARGET.AI_SUMMARY, s.generated_at);

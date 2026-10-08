@@ -16,7 +16,7 @@ async function initFamilyPage(){
 document.addEventListener('DOMContentLoaded', initFamilyPage);
 
 async function refreshFamilyPage(){
-  await Promise.all([refreshPatient(), refreshChat()]);
+  await Promise.all([refreshPatient(), refreshChat(), refreshInterviews()]);
 }
 
 async function refreshPatient(){
@@ -32,6 +32,7 @@ async function refreshPatient(){
     }
     familyDetail = d;
     applyChatMode();
+    if(typeof renderInterviews === 'function' && document.getElementById('interviewCalendar').innerHTML) renderInterviews();
     const p = d.patient;
     const age = calcAge(p.birth_date);
     const diag = s.filter(x => x.symptom_master && x.symptom_master.symptom_type_id === SYMPTOM_TYPE.DIAGNOSIS)

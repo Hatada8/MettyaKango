@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | 面談予定</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="../shared/css/components.css">
+<link rel="stylesheet" href="../shared/css/calendar.css">
+<link rel="stylesheet" href="nurse.css">
+</head>
+<body>
+
+  <section>
+    <div class="appbar">
+      <div class="brand">
+        <span class="mark serif">めっちゃかんご</span>
+        <span class="tag">NURSE MODE</span>
+      </div>
+      <div class="appbar-right">
+        <span class="mode-pill nurse"><span class="dot"></span><span id="nurseWelcome">看護師として閲覧中</span></span>
+        <button class="switch-btn" onclick="logout()">ログアウト</button>
+      </div>
+    </div>
+
+    <div class="main sub-main" id="subBody">
+      <button type="button" class="back-btn" id="backBtn" onclick="backFromInterviews()">← 患者一覧へ戻る</button>
+      <div class="sub-patient" id="subPatient"></div>
+
+      <div class="card" id="pendingCard">
+        <h3>🕒 確認待ちの申込み <span class="muted" id="pendingCount"></span></h3>
+        <div id="pendingList"><div class="empty">読み込み中…</div></div>
+      </div>
+
+      <div class="card">
+        <h3>📅 面談予定 <span class="muted" id="scopeLabel"></span></h3>
+        <div id="staffCalendar"><div class="empty">読み込み中…</div></div>
+        <div class="iv-panel hidden" id="staffDayPanel"></div>
+      </div>
+    </div>
+  </section>
+
+<div class="toast" id="toast"></div>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/hash.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/employee.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/memo.js"></script>
+<script src="../shared/js/api/interview.js"></script>
+<script src="../shared/js/api/read-status.js"></script>
+<script src="../shared/js/ui/modal.js"></script>
+<script src="../shared/js/ui/calendar.js"></script>
+<script src="js/interviews.js"></script>
+<script>document.addEventListener('DOMContentLoaded', initInterviewsPage);</script>
+</body>
+</html>

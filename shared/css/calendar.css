@@ -1,0 +1,92 @@
+/* 月のカレンダー（日曜はじまり）：面談の予約・面談予定で共通 */
+.cal{ width:100%; }
+.cal-head{ display:flex; align-items:flex-end; gap:12px; margin-bottom:6px; flex-wrap:wrap; }
+.cal-title{ display:flex; align-items:baseline; gap:10px; }
+.cal-num{ font-size:clamp(34px, 5vw, 54px); line-height:1; font-weight:500; }
+.cal-en{ font-size:clamp(15px, 2vw, 20px); font-weight:700; }
+.cal-nav{ display:flex; gap:6px; align-self:center; margin-left:8px; }
+.cal-btn{
+  min-width:38px; height:34px; padding:0 10px; border-radius:9px; font-size:16px; line-height:1;
+  background:var(--panel); border:1px solid var(--line); color:var(--ink);
+}
+.cal-btn:hover{ border-color:var(--ink-soft); }
+.cal-btn.today-btn{ font-size:12.5px; }
+.cal-year{ margin-left:auto; font-size:clamp(22px, 3.2vw, 34px); line-height:1.1; }
+
+.cal-dow{ display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; font-weight:700; font-size:12px; letter-spacing:.04em; padding:6px 0; }
+.cal-dow .sun, .cal-cell.sun .cal-day{ color:#B23A3A; }
+.cal-dow .sat, .cal-cell.sat .cal-day{ color:#1E74B8; }
+
+.cal-grid{ display:grid; grid-template-columns:repeat(7, 1fr); border-top:1px solid #2b2b2b; border-left:1px solid #2b2b2b; }
+.cal-cell{
+  min-height:clamp(64px, 9vw, 108px); padding:4px 6px; box-sizing:border-box; min-width:0; overflow:hidden;
+  border-right:1px solid #2b2b2b; border-bottom:1px solid #2b2b2b; background:#fff; cursor:pointer;
+  display:flex; flex-direction:column; gap:3px;
+}
+.cal-cell:hover:not(.disabled){ background:#f4faf8; }
+.cal-cell.out{ background:#fff; }
+.cal-cell.out .cal-day{ color:#c9c9c9 !important; }
+.cal-cell.disabled{ cursor:default; }
+.cal-cell.disabled .cal-day{ opacity:.45; }
+.cal-cell.today .cal-day{ background:var(--nurse); color:#fff !important; border-radius:50%; min-width:1.5em; text-align:center; align-self:flex-start; padding:0 2px; }
+.cal-cell.selected{ outline:2px solid var(--nurse); outline-offset:-2px; background:var(--nurse-soft); }
+.cal-day{ font-size:clamp(13px, 1.8vw, 20px); line-height:1.4; }
+.cal-body{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+
+/* 日付の中の予約の表示 */
+.cal-chip{
+  font-size:11px; line-height:1.4; padding:1px 5px; border-radius:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  background:#e7f1ee; color:#1f4d44; border-left:3px solid #2f6f62;
+}
+.cal-chip.req{ background:#fff3dc; color:#7a5200; border-left-color:#D9A441; }
+.cal-chip.done{ background:#eef0f1; color:#6c7a76; border-left-color:#aab5b1; }
+.cal-chip.mine{ background:#fdeae6; color:#8a3a2a; border-left-color:#C9564A; }
+.cal-more{ font-size:10.5px; color:var(--ink-soft); }
+.cal-free{ font-size:10.5px; color:var(--ink-soft); }
+
+@media (max-width:560px){
+  .cal-cell{ padding:3px 3px; min-height:54px; }
+  .cal-chip{ font-size:0; padding:0; height:6px; width:6px; border-radius:50%; border-left-width:0; background:#2f6f62; display:inline-block; }
+  .cal-chip.req{ background:#D9A441; }
+  .cal-chip.done{ background:#aab5b1; }
+  .cal-chip.mine{ background:#C9564A; }
+  .cal-body{ flex-direction:row; flex-wrap:wrap; gap:3px; }
+  .cal-free{ display:none; }
+  .cal-more{ font-size:9.5px; }
+}
+
+/* 日付を選んだあとの、時間・内容の入力 */
+.iv-panel{ margin-top:16px; padding:16px 18px; border:1px solid var(--line); border-radius:12px; background:var(--bg); }
+.iv-panel h4{ margin:0 0 10px; font-size:14px; }
+.iv-times{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.iv-time{
+  min-width:76px; height:42px; padding:0 12px; border-radius:10px; font-size:14px; font-weight:500;
+  background:#fff; border:1.5px solid var(--line); color:var(--ink);
+}
+.iv-time:hover:not(:disabled){ border-color:var(--nurse); }
+.iv-time.on{ background:var(--nurse); border-color:var(--nurse); color:#fff; }
+.iv-time:disabled{ background:#eceff0; color:#a4aeab; text-decoration:line-through; cursor:default; }
+.iv-form{ display:grid; grid-template-columns:1fr; gap:10px; }
+.iv-form select, .iv-form input[type=text], .iv-form textarea{
+  width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:14px; background:#fff;
+  font-family:inherit;
+}
+.iv-label{ font-size:12px; color:var(--ink-soft); margin-bottom:3px; display:block; }
+
+/* 予約の一覧 */
+.iv-list{ display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.iv-item{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 12px; border-radius:10px; background:var(--bg); font-size:13px; }
+.iv-item .when{ font-weight:700; min-width:8.5em; }
+.iv-item .who{ font-weight:500; }
+.iv-item .what{ color:var(--ink-soft); flex:1; min-width:8em; }
+.iv-item .acts{ display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
+.iv-badge{ font-size:11px; font-weight:700; padding:2px 9px; border-radius:99px; background:#e7f1ee; color:#1f4d44; white-space:nowrap; }
+.iv-badge.s1{ background:#fff3dc; color:#7a5200; }
+.iv-badge.s2{ background:#e1f3e8; color:#1d6b43; }
+.iv-badge.s3{ background:#eceff0; color:#6c7a76; }
+.iv-badge.s4{ background:#e8eef7; color:#2f4f7a; }
+.iv-small-btn{ font-size:12px; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink); min-height:34px; }
+.iv-small-btn:hover{ border-color:var(--ink-soft); }
+.iv-small-btn.primary{ background:var(--nurse); border-color:var(--nurse); color:#fff; }
+.iv-small-btn.danger{ color:#A8503E; border-color:#F1CFC2; }
+.iv-closed{ padding:10px 14px; border-radius:10px; background:#EEF2F4; color:var(--ink-soft); font-size:12.5px; line-height:1.7; }
