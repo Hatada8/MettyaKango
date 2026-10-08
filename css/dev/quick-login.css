@@ -1,0 +1,13 @@
+/* 【仮】テスト用クイックログイン（後で削除） */
+.dev-quick-login{
+  max-width:360px; margin:0 auto 22px;
+  background:#FFF7D6; border:2px dashed #D9A441; border-radius:12px;
+  padding:12px 14px; text-align:center;
+}
+.dev-quick-label{ font-size:12px; font-weight:700; color:#8A5A00; margin-bottom:10px; }
+.dev-quick-buttons{ display:flex; gap:10px; }
+.dev-quick-buttons button{
+  flex:1; background:#D9A441; color:#fff; font-size:13px; font-weight:500;
+  padding:10px 8px; border-radius:9px;
+}
+.dev-quick-buttons button:hover{ filter:brightness(1.08); }

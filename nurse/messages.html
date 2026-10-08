@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | メッセージ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="../shared/css/components.css">
+<link rel="stylesheet" href="nurse.css">
+</head>
+<body>
+
+  <section>
+    <div class="appbar">
+      <div class="brand">
+        <span class="mark serif">めっちゃかんご</span>
+        <span class="tag">NURSE MODE</span>
+      </div>
+      <div class="appbar-right">
+        <span class="mode-pill nurse"><span class="dot"></span><span id="nurseWelcome">看護師として閲覧中</span></span>
+        <button class="switch-btn" onclick="logout()">ログアウト</button>
+      </div>
+    </div>
+
+    <div class="main sub-main" id="subBody">
+      <button type="button" class="back-btn" onclick="backToProfile()">← 患者プロフィールへ戻る</button>
+      <div class="sub-patient" id="subPatient"></div>
+      <div class="card">
+        <h3>💬 家族とのメッセージ</h3>
+        <p class="muted" id="familyAccounts" style="margin:-8px 0 12px;"></p>
+        <div class="chat nurse-chat" id="nurseChatBox" style="max-height:420px;">
+          <div class="empty">読み込み中…</div>
+        </div>
+        <div class="chat-input">
+          <input id="nurseChatInput" type="text" placeholder="家族へメッセージを送る…" onkeydown="if(event.key==='Enter' && !event.isComposing) sendNurseMsg()">
+          <button class="chat-send" onclick="sendNurseMsg()">送信</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<div class="toast" id="toast"></div>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/hash.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/employee.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/symptom.js"></script>
+<script src="../shared/js/api/memo.js"></script>
+<script src="../shared/js/api/ai-summary.js"></script>
+<script src="../shared/js/api/family.js"></script>
+<script src="../shared/js/api/chat.js"></script>
+<script src="../shared/js/ui/modal.js"></script>
+<script src="js/state.js"></script>
+<script src="js/sub-page.js"></script>
+<script src="js/chat.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => initSubPage(async () => {
+  await refreshNurseChat();
+  nursePollTimer = setInterval(() => { if(!document.hidden) refreshNurseChat(); }, 10000);
+}));
+</script>
+</body>
+</html>

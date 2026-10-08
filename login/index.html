@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | ログイン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="../shared/css/components.css">
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+  <section id="screen-login" class="active">
+    <div class="portal login-title">
+      <div class="brandname serif">めっちゃかんご</div>
+      <h1>患者様と<br>もっと一緒に。</h1>
+      <div class="sub">MECCHA KANGO</div>
+    </div>
+
+    <div class="login-hero">
+    <div class="login-bg" id="loginBg" aria-hidden="true"></div>
+    <div class="login-dots" id="loginDots"></div>
+    <div class="portal login-hero-inner">
+      <div class="auth-tabs">
+        <button type="button" id="tabStaff" class="auth-tab active" onclick="setLoginRole('staff')">職員の方</button>
+        <button type="button" id="tabFamily" class="auth-tab" onclick="setLoginRole('family')">ご家族の方</button>
+      </div>
+
+      <!-- 職員：職員番号＋パスワード -->
+      <div id="staffFields">
+        <div class="login-field">
+          <div class="login-label">職員番号</div>
+          <input type="text" id="loginStaffNo" inputmode="numeric" placeholder="例：10001" autocomplete="username">
+        </div>
+      </div>
+
+      <!-- ご家族：患者ID＋メールアドレス＋パスワード -->
+      <div id="familyFields" style="display:none;">
+        <div class="login-field">
+          <div class="login-label">患者ID（病院から伝えられた番号）</div>
+          <input type="text" id="loginPatientNo" inputmode="numeric" placeholder="例：100001">
+        </div>
+        <div class="login-field">
+          <div class="login-label">メールアドレス</div>
+          <input type="email" id="loginEmail" placeholder="例：family@example.com" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="login-field" style="margin-bottom:12px;">
+        <div class="login-label">パスワード</div>
+        <input type="password" id="loginPassword" placeholder="パスワード" autocomplete="current-password"
+          onkeydown="if(event.key === 'Enter') handleAuth(loginRole)">
+      </div>
+      <p class="login-note" id="loginNote">職員のアカウントは管理者が登録します。</p>
+
+      <!-- ▼▼▼ デモ用のかんたんログイン（あとで消す：この div と js/demo-login.js を削除） ▼▼▼ -->
+      <div class="demo-login">
+        <span>デモ用かんたんログイン</span>
+        <button type="button" onclick="demoLogin('admin')">管理者</button>
+        <button type="button" onclick="demoLogin('nurse')">看護師（一般）</button>
+        <button type="button" onclick="demoLogin('family')">ご家族</button>
+      </div>
+      <!-- ▲▲▲ デモ用ここまで ▲▲▲ -->
+
+    </div>
+    </div>
+
+    <div class="portal login-cards">
+      <div class="portal-cards">
+        <div class="portal-card nurse" onclick="handleAuth('nurse')">
+          <div class="icon">🩺</div>
+          <h2>看護師用</h2>
+          <p>担当患者のプロフィールと今の状態を一目で把握。記録はAIが要約し、申し送りの負担を減らします。</p>
+          <span class="enter" id="nurseEnterLabel">職員としてログイン　→</span>
+        </div>
+        <div class="portal-card family" onclick="handleAuth('family')">
+          <div class="icon">🏠</div>
+          <h2>家族用</h2>
+          <p>離れていても今日の様子がわかる。看護師からのお知らせとメッセージで、いつでもつながれます。</p>
+          <span class="enter" id="familyEnterLabel">家族としてログイン　→</span>
+        </div>
+      </div>
+      <div class="portal-foot">※ 入力した記録・メッセージはこのアプリを開いた全員に共有されます。</div>
+    </div>
+  </section>
+
+
+<div class="toast" id="toast"></div>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/hash.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/employee.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/family.js"></script>
+<script src="js/login.js"></script>
+<script src="js/demo-login.js"></script>
+<script src="js/slideshow.js"></script>
+</body>
+</html>

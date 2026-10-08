@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | 患者一覧</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="staff.css">
+</head>
+<body>
+<header id="appHeader"></header>
+
+<main class="wrap">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">CARE OVERVIEW</div>
+      <h1 id="greeting">こんにちは</h1>
+      <p class="muted">入院中の患者さんの様子を確認しましょう。★を付けた患者さんは一覧の上に固定されます。</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="primary hidden" id="newPatientBtn" onclick="openPatientForm({ mode: 'create', onDone: id => goTo('patient.html?id=' + id) })">＋ 患者さんを登録</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat blue"><small>入院中</small><b id="statTotal">-</b><span>名</span></div>
+    <div class="stat pink"><small>要注意</small><b id="statAlert">-</b><span>名</span></div>
+    <div class="stat yellow"><small>要観察</small><b id="statWatch">-</b><span>名</span></div>
+    <div class="stat green"><small>ご家族からの未読</small><b id="statUnread">-</b><span>件</span></div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>患者一覧</h2>
+        <p class="muted">患者さんを選ぶと詳細を確認できます。</p>
+      </div>
+      <div class="list-tools">
+        <div class="segmented" id="listFilter">
+          <button type="button" class="on" data-filter="all">すべて</button>
+          <button type="button" data-filter="favorite">★ お気に入り</button>
+          <button type="button" data-filter="alert">要注意</button>
+        </div>
+        <input class="input" id="search" type="search" placeholder="名前・ふりがな・部屋・患者IDで検索">
+      </div>
+    </div>
+    <div id="patientList"><p class="empty">読み込み中…</p></div>
+  </section>
+</main>
+<footer>めっちゃかんご　—　つながる安心、ひろがる笑顔。</footer>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/hash.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/ui/layout.js"></script>
+<script src="../shared/js/ui/modal.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/employee.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/symptom.js"></script>
+<script src="../shared/js/api/favorite.js"></script>
+<script src="../shared/js/api/chat.js"></script>
+<script src="js/patient-form.js"></script>
+<script src="js/list.js"></script>
+</body>
+</html>

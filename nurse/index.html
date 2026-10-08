@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | 看護師</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="../shared/css/components.css">
+<link rel="stylesheet" href="nurse.css">
+</head>
+<body>
+
+  <section id="screen-nurse">
+    <div class="appbar">
+      <div class="brand">
+        <span class="mark serif">めっちゃかんご</span>
+        <span class="tag">NURSE MODE</span>
+      </div>
+      <div class="appbar-right">
+        <span class="mode-pill nurse"><span class="dot"></span><span id="nurseWelcome">看護師として閲覧中</span></span>
+        <button class="switch-btn hidden" id="adminLink" onclick="goTo('../admin/index.html')">⚙ 管理</button>
+        <button class="switch-btn" onclick="logout()">ログアウト</button>
+      </div>
+    </div>
+
+    <div class="shell">
+      <div class="sidebar">
+        <div class="label" id="patientCountLabel">担当患者</div>
+        <div class="sidebar-search-row">
+          <input type="text" id="patientSearch" placeholder="🔍 患者名で検索" oninput="renderPatientList()">
+          <select id="patientSexFilter" onchange="renderPatientList()">
+            <option value="">性別：全て</option>
+            <option value="2">女性</option>
+            <option value="1">男性</option>
+          </select>
+        </div>
+        <!-- 管理者だけに出る -->
+        <button id="addPatientBtn" class="hidden sidebar-add-btn"
+          onclick="openPatientForm({ mode: 'create', onDone: async id => { await loadPatientList(); renderPatient(id); } })">＋ 新規患者を登録</button>
+        <p class="sidebar-hint">☆を押すとお気に入りになり、一覧の上に固定されます。</p>
+
+        <div id="patientListWrap">
+          <div id="patientList"><div class="empty" style="padding:16px 8px;">読み込み中…</div></div>
+        </div>
+      </div>
+      <div class="main" id="nurseMain"></div>
+    </div>
+  </section>
+
+
+<div class="toast" id="toast"></div>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/hash.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/employee.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/symptom.js"></script>
+<script src="../shared/js/api/memo.js"></script>
+<script src="../shared/js/api/ai-summary.js"></script>
+<script src="../shared/js/api/favorite.js"></script>
+<script src="../shared/js/api/family.js"></script>
+<script src="../shared/js/api/chat.js"></script>
+<script src="../shared/js/ui/modal.js"></script>
+<script src="../shared/js/ui/patient-form.js"></script>
+<script src="js/state.js"></script>
+<script src="js/patient-list.js"></script>
+<script src="js/patient-detail.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

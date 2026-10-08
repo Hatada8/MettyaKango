@@ -1,0 +1,248 @@
+/* 看護師画面専用 */
+  /* ---------- layout shells ---------- */
+  .shell{ display:grid; grid-template-columns:280px 1fr; min-height:calc(100vh - 61px); }
+  @media(max-width:860px){ .shell{ grid-template-columns:1fr; } }
+
+  .sidebar{
+    background:var(--panel); border-right:1px solid var(--line);
+    padding:20px 16px; overflow-y:auto;
+    display:flex; flex-direction:column; min-height:0;
+  }
+  .sidebar .label{ font-size:11px; color:var(--ink-soft); letter-spacing:.1em; padding:0 8px 10px; }
+  .sidebar-search-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .sidebar-search-row input{ flex:1; min-width:0; }
+  .sidebar-search-row select{
+    border:1px solid var(--line); border-radius:9px; padding:9px 8px; font-size:13px; background:var(--bg);
+  }
+  #patientListWrap{ flex:1 1 auto; overflow-y:auto; min-height:0; }
+  @media(max-width:860px){ #patientListWrap{ max-height:320px; } }
+  .patient-item{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 10px; border-radius:12px; cursor:pointer; margin-bottom:4px;
+    transition:.12s;
+  }
+  .patient-item:hover{ background:var(--bg); }
+  .patient-item.active{ background:var(--nurse-soft); }
+  .avatar{
+    width:38px; height:38px; border-radius:50%; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; color:#fff; background:var(--nurse-deep);
+  }
+  .patient-item .meta{ flex:1; min-width:0; }
+  .patient-item .name{ font-size:14px; font-weight:500; }
+  .patient-item .room{ font-size:11.5px; color:var(--ink-soft); }
+  .flag{
+    width:8px; height:8px; border-radius:50%; flex:0 0 auto;
+  }
+  .flag.high{ background:#C9564A; }
+  .flag.mid{ background:#D9A441; }
+  .flag.low{ background:#7FA98B; }
+
+  /* ---------- 上部バー・サイドバーの追加部品 ---------- */
+  .appbar-right{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
+  .sidebar-add-btn{
+    width:100%; background:var(--nurse); color:#fff; font-size:13px; font-weight:500;
+    padding:10px; border-radius:9px; margin-bottom:10px;
+  }
+  .sidebar-add-btn:hover{ filter:brightness(1.08); }
+  .sidebar-hint{ font-size:11px; color:var(--ink-soft); margin:0 8px 10px; }
+  .list-group{ font-size:11px; color:var(--ink-soft); letter-spacing:.08em; padding:8px 8px 4px; }
+
+  /* お気に入りの星 */
+  .fav-star{
+    flex:0 0 auto; background:transparent; font-size:17px; line-height:1; color:#B9C6C2;
+    padding:2px 4px; border-radius:6px;
+  }
+  .fav-star:hover{ color:#D9A441; }
+  .fav-star.on{ color:#D9A441; }
+  .pname .fav-star{ font-size:18px; vertical-align:2px; }
+
+  /* ご家族からの未読 */
+  .unread-badge{
+    flex:0 0 auto; font-size:11px; font-weight:700; color:var(--family-deep);
+    background:var(--family-soft); border:1px solid #F1D9D0; padding:2px 7px; border-radius:99px;
+  }
+
+  .profile-top{ display:flex; align-items:center; gap:16px; margin-bottom:18px; }
+  .profile-top .avatar{ width:56px; height:56px; font-size:18px; }
+  .profile-top .pname{ font-size:19px; font-weight:700; }
+  .profile-top .psub{ font-size:12.5px; color:var(--ink-soft); }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:520px){ .grid2{ grid-template-columns:1fr; } }
+  .field{ font-size:13px; }
+  .field .k{ color:var(--ink-soft); font-size:11.5px; margin-bottom:3px; letter-spacing:.03em; }
+  .field .v{ font-weight:500; }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .chip{
+    font-size:12px; padding:6px 12px; border-radius:99px;
+    background:var(--bg); color:var(--ink); border:1px solid var(--line);
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .chip.warn{ background:#FCEEE9; color:#A8503E; border-color:#F1CFC2; }
+  .chip-remove{
+    cursor:pointer; font-size:12px; opacity:.55; line-height:1;
+  }
+  .chip-remove:hover{ opacity:1; }
+
+  .issue-add-row{
+    display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;
+  }
+  .issue-add-row select, .issue-add-row input{
+    border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px; background:var(--bg);
+  }
+  .issue-add-row select{ flex:1 1 160px; }
+  .issue-add-row input{ flex:1 1 140px; }
+  .issue-add-row button{
+    background:var(--nurse-deep); color:#fff; font-size:12.5px; font-weight:500; padding:8px 16px; border-radius:8px;
+  }
+  .issue-add-row button:hover{ filter:brightness(1.1); }
+
+  textarea.notes{
+    width:100%; min-height:300px; border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; font-size:14px; line-height:1.8; resize:vertical; background:var(--bg);
+  }
+
+  .image-attach-row{
+    display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;
+  }
+  .attach-btn{
+    background:var(--bg); border:1px solid var(--line); font-size:12.5px; font-weight:500;
+    padding:8px 14px; border-radius:8px; color:var(--ink);
+  }
+  .attach-btn:hover{ background:var(--nurse-soft); }
+  .attach-hint{ font-size:11.5px; color:var(--ink-soft); }
+
+  #imagePreviewWrap{
+    display:flex; align-items:center; gap:12px; margin-top:12px;
+    background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+  }
+  #imagePreviewThumb{
+    max-width:120px; max-height:90px; border-radius:6px; object-fit:cover; border:1px solid var(--line);
+  }
+  .remove-image-btn{
+    background:transparent; color:var(--ink-soft); font-size:12px; border:1px solid var(--line);
+    padding:6px 12px; border-radius:8px;
+  }
+  .remove-image-btn:hover{ color:var(--ink); border-color:var(--ink-soft); }
+
+  .ai-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--nurse); color:#fff; font-size:13px; font-weight:500;
+    padding:10px 18px; border-radius:10px; margin-top:12px;
+  }
+  .ai-btn:hover{ filter:brightness(1.08); }
+  .ai-btn:disabled{ opacity:.6; cursor:default; }
+  .ai-btn .spin{
+    width:13px; height:13px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.4); border-top-color:#fff;
+    animation:spin .7s linear infinite; display:none;
+  }
+  .ai-btn.loading .spin{ display:inline-block; }
+
+  .log-form{ display:flex; flex-direction:column; gap:10px; }
+  .log-row{ display:flex; gap:10px; }
+  .log-row select, .log-row input{
+    border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-size:13px; background:var(--bg);
+  }
+  .save-btn{
+    align-self:flex-start; background:var(--nurse-deep); color:#fff; font-size:13px;
+    padding:9px 18px; border-radius:9px; font-weight:500;
+  }
+  .save-btn:hover{ filter:brightness(1.1); }
+
+  .np-input{
+    width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-size:13px; background:#fff;
+  }
+
+  .id-badge{
+    display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono', monospace;
+    background:var(--nurse-deep); color:#fff; font-size:12px; padding:4px 10px; border-radius:7px; letter-spacing:.04em;
+  }
+
+  /* ---------- プロフィールの追加部品 ---------- */
+  .admin-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .mini-btn{
+    background:transparent; color:var(--ink-soft); font-size:12px;
+    border:1px solid var(--line); padding:6px 12px; border-radius:8px; transition:.15s;
+  }
+  .mini-btn:hover{ border-color:var(--ink-soft); color:var(--ink); }
+  .mini-btn.danger-btn{ color:#A8503E; border-color:#F1CFC2; }
+  .mini-btn.danger-btn:hover{ background:#FCEEE9; }
+  .discharged-note{
+    font-size:12.5px; padding:10px 14px; border-radius:10px; margin-bottom:14px;
+    background:var(--bg); color:var(--ink-soft); border:1px solid var(--line);
+  }
+  .field .v.allergy{ color:#A8503E; }
+  .grid2 + .chips{ margin-top:14px; }
+
+  .history-mini{
+    display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:14px; padding-top:12px; border-top:1px dashed var(--line);
+    font-size:12px; color:var(--ink-soft);
+  }
+  .history-mini .k{ font-size:11.5px; letter-spacing:.03em; }
+
+  /* ---------- メモ（申し送り・プライベート） ---------- */
+  .memo-input{
+    width:100%; min-height:90px; max-height:360px; border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; font-size:13.5px; line-height:1.8; resize:vertical; background:var(--bg);
+  }
+  .memo-foot{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .memo-item{ flex-direction:column; gap:4px; }
+  .memo-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .memo-author{ font-weight:700; font-size:12px; }
+  .family-tag{ font-size:10.5px; padding:2px 8px; border-radius:99px; background:var(--family-soft); color:var(--family-deep); }
+  .memo-tools{ margin-left:auto; display:flex; gap:10px; }
+  .danger-link{ color:#A8503E; }
+  .memo-body{ white-space:pre-wrap; word-break:break-word; line-height:1.8; }
+  .memo-body.clamp{ display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; }
+  .memo-item > .text-link{ align-self:flex-start; }
+
+  /* ---------- AI要約 ---------- */
+  .ai-text{ white-space:pre-wrap; word-break:break-word; }
+  .ai-edit{ background:#fff; min-height:300px; }
+  .ai-meta{ font-size:11px; opacity:.7; margin-top:10px; }
+  .ai-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .ai-actions .check{ margin-left:auto; }
+  .ai-original{ margin-top:12px; font-size:12.5px; }
+  .ai-original summary{ cursor:pointer; color:var(--nurse); }
+  .ai-original .ai-text{ margin-top:8px; padding:12px 14px; background:var(--bg); border-radius:10px; color:var(--ink-soft); line-height:1.8; }
+
+  /* ---------- プロフィールの下：各ページへ行くボタン ---------- */
+  .page-menu{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:560px){ .page-menu{ grid-template-columns:1fr; } }
+  .page-btn{
+    display:flex; align-items:center; gap:14px; text-align:left;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 18px; box-shadow:var(--shadow); transition:.15s; color:var(--ink);
+  }
+  .page-btn:hover{ border-color:var(--nurse); transform:translateY(-1px); }
+  .page-btn-icon{
+    flex:0 0 auto; width:44px; height:44px; border-radius:12px; font-size:22px;
+    display:flex; align-items:center; justify-content:center; background:var(--nurse-soft);
+  }
+  .page-btn-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .page-btn-title{ font-size:15px; font-weight:700; }
+  .page-btn-desc{ font-size:11.5px; color:var(--ink-soft); }
+  .page-btn-arrow{ flex:0 0 auto; font-size:22px; color:var(--ink-soft); line-height:1; }
+
+  /* ---------- 各ページ共通（AI要約・メモ・メッセージ） ---------- */
+  .sub-main{ margin:0 auto; }
+  .sub-patient{
+    display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;
+  }
+  .sub-patient .avatar{ width:40px; height:40px; font-size:14px; }
+  .sub-patient .sub-name{ font-size:16px; font-weight:700; }
+  .sub-patient .sub-meta{ font-size:12px; color:var(--ink-soft); }
+  .back-btn{
+    background:transparent; color:var(--nurse-deep); font-size:13px; font-weight:500;
+    border:1px solid var(--line); padding:8px 14px; border-radius:10px; margin-bottom:16px;
+  }
+  .back-btn:hover{ border-color:var(--nurse); background:var(--nurse-soft); }
+
+  /* 申し送りメモ：短く書く */
+  .memo-input.short{ min-height:64px; }
+
+  /* 広いモニターでも、右側のスペースの中で中央に置く */
+  .shell > .main{ margin:0 auto; width:100%; }

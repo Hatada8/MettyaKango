@@ -1,0 +1,73 @@
+/* 共通：色・フォント・リセット・上部バー */
+  :root{
+    --bg: #EFF3F1;
+    --panel: #FFFFFF;
+    --ink: #1F2E2B;
+    --ink-soft: #5B6D68;
+    --line: #DCE4E1;
+
+    --nurse: #2F6F62;
+    --nurse-soft: #DCEBE7;
+    --nurse-deep: #1D4A40;
+
+    --family: #C97B6B;
+    --family-soft: #F6E4DF;
+    --family-deep: #96473A;
+
+    --night: #3B4C7A;
+    --night-soft: #E2E6F0;
+    --night-deep: #29365A;
+
+    --radius: 14px;
+    --shadow: 0 10px 30px rgba(31,46,43,0.08);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{ font-family:'Shippori Mincho', serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  button{ font-family:inherit; cursor:pointer; border:none; }
+  input, textarea, select{ font-family:inherit; }
+
+  /* ---------- app bar ---------- */
+  .appbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+  }
+  .appbar .brand{ display:flex; align-items:baseline; gap:10px; }
+  .appbar .brand .mark{ font-size:22px; letter-spacing:.02em; }
+  .appbar .brand .tag{ font-size:12px; color:var(--ink-soft); letter-spacing:.08em; }
+  .appbar .mode-pill{
+    font-size:12px; padding:6px 14px; border-radius:99px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .mode-pill.nurse{ background:var(--nurse-soft); color:var(--nurse-deep); }
+  .mode-pill.family{ background:var(--family-soft); color:var(--family-deep); }
+  .mode-pill.patient{ background:var(--night-soft); color:var(--night-deep); }
+  .mode-pill .dot{ width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .switch-btn{
+    background:transparent; color:var(--ink-soft); font-size:13px;
+    border:1px solid var(--line); padding:8px 14px; border-radius:10px;
+    transition:.15s;
+  }
+  .switch-btn:hover{ border-color:var(--ink-soft); color:var(--ink); }
+
+  /* スマホ：上部バーを 2 段にして、ロゴが縦に折れないようにする */
+  @media(max-width:640px){
+    .appbar{ flex-wrap:wrap; gap:10px; padding:12px 16px; }
+    .appbar .brand .mark{ white-space:nowrap; font-size:20px; }
+    .appbar .brand .tag{ white-space:nowrap; }
+    .appbar > div:last-child{ width:100%; flex-wrap:wrap; justify-content:flex-start !important; gap:8px !important; }
+    .appbar .mode-pill{ font-size:11px; }
+    .switch-btn{ padding:6px 12px; font-size:12px; }
+  }

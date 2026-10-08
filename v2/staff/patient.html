@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | 患者詳細</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="staff.css">
+</head>
+<body>
+<header id="appHeader"></header>
+
+<main class="wrap">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">PATIENT PROFILE</div>
+      <h1>患者詳細・記録</h1>
+      <p class="muted">診断・メモ・AI要約・ご家族とのやりとりをまとめて確認できます。</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="light" onclick="goTo('index.html')">← 患者一覧</button>
+      <!-- 管理者だけに出るボタン -->
+      <button type="button" class="light hidden" id="editBtn">✎ 患者情報を修正</button>
+      <button type="button" class="light hidden" id="readmitBtn">再入院を登録</button>
+      <button type="button" class="light hidden" id="dischargeBtn">退院にする</button>
+      <button type="button" class="danger hidden" id="deleteBtn">削除</button>
+    </div>
+  </div>
+
+  <div id="notFound" class="panel hidden"><p class="empty">この患者さんは見つかりません（削除された可能性があります）。</p></div>
+
+  <div id="detailBody" class="hidden">
+    <div id="dischargedNote" class="discharged-note hidden"></div>
+
+    <!-- プロフィール -->
+    <section class="panel profile" id="profilePanel"></section>
+
+    <div class="two-col">
+      <!-- 診断・注意事項・入院歴 -->
+      <section class="panel">
+        <h2>診断・注意事項</h2>
+        <div id="facts"></div>
+        <h2 style="margin-top:20px;">入院歴</h2>
+        <ul class="history-list" id="historyList"></ul>
+      </section>
+
+      <!-- プライベートメモ -->
+      <section class="panel">
+        <h2>プライベートメモ</h2>
+        <p class="muted">趣味・好きなもの・家族のことなど、お仕事の記録ではない患者さんのことを書く場所です。</p>
+        <form class="editor" id="privateForm">
+          <textarea class="input" id="privateText" placeholder="例：演歌が好き。お孫さんの話をすると笑顔になる。"></textarea>
+          <div class="editor-foot"><span></span><button type="submit" class="primary">保存する</button></div>
+        </form>
+        <div class="timeline" id="privateList"></div>
+      </section>
+    </div>
+
+    <!-- AI 要約 -->
+    <section class="panel ai-panel" id="aiPanel"></section>
+
+    <!-- 申し送りメモ -->
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>申し送りメモ</h2>
+          <p class="muted">自由に書けます。ご家族にも見せたいメモは「ご家族にも表示する」にチェックしてください。</p>
+        </div>
+      </div>
+      <form class="editor" id="handoverForm">
+        <textarea class="input" id="handoverText" placeholder="申し送りを書く（長くなっても大丈夫です）"></textarea>
+        <div class="editor-foot">
+          <label class="check"><input type="checkbox" id="handoverFamily"> ご家族にも表示する</label>
+          <button type="submit" class="primary">保存する</button>
+        </div>
+      </form>
+      <div class="timeline" id="handoverList"></div>
+    </section>
+
+    <!-- ご家族とのチャット -->
+    <section class="panel">
+      <div class="panel-head">
+        <div><h2>ご家族とのチャット</h2><p class="muted" id="familyAccounts"></p></div>
+        <button type="button" class="light small" onclick="loadChat()">更新</button>
+      </div>
+      <div class="chat-box" id="chatBox"></div>
+      <form class="chat-form" id="chatForm">
+        <textarea class="input" id="chatText" placeholder="ご家族へメッセージ"></textarea>
+        <button type="submit" class="primary">送信</button>
+      </form>
+    </section>
+  </div>
+</main>
+<footer>めっちゃかんご　—　つながる安心、ひろがる笑顔。</footer>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/hash.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/ui/layout.js"></script>
+<script src="../shared/js/ui/modal.js"></script>
+<script src="../shared/js/ui/chat-view.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/employee.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/symptom.js"></script>
+<script src="../shared/js/api/memo.js"></script>
+<script src="../shared/js/api/ai-summary.js"></script>
+<script src="../shared/js/api/favorite.js"></script>
+<script src="../shared/js/api/family.js"></script>
+<script src="../shared/js/api/chat.js"></script>
+<script src="js/patient-form.js"></script>
+<script src="js/detail-profile.js"></script>
+<script src="js/detail-ai.js"></script>
+<script src="js/detail-memos.js"></script>
+<script src="js/detail-chat.js"></script>
+<script src="js/detail-main.js"></script>
+</body>
+</html>

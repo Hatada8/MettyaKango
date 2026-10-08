@@ -1,0 +1,27 @@
+/* 家族画面 */
+.date-chip{ background:#fff; border:1px solid var(--line); padding:9px 14px; border-radius:99px; font-size:11px; color:#7897a4; white-space:nowrap; }
+
+.family-hero{ display:flex; align-items:center; gap:16px; background:linear-gradient(110deg,#fff,#e6f9f5); }
+.family-hero h2{ margin:2px 0 4px; font-size:20px; }
+.family-hero p{ margin:0 0 8px; }
+.family-hero .flower{ margin-left:auto; font-size:64px; color:#a9e4d4; line-height:1; }
+
+.family-stats{ display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:18px; }
+.family-stats .panel{ margin:0; display:grid; grid-template-columns:34px 1fr; align-items:center; padding:14px; }
+.family-stats .panel > span{ grid-row:span 2; color:#19a69c; font-size:20px; }
+.family-stats small{ font-size:10px; color:#8aa4af; }
+.family-stats b{ font-size:15px; }
+
+.family-summary{ display:grid; grid-template-columns:50px 1fr; gap:0 12px; background:linear-gradient(130deg,#fff,#f4fcf6); }
+.family-summary h2{ margin-top:3px; }
+.sun{ width:46px; height:46px; display:grid; place-items:center; border-radius:15px; background:#fff2d8; color:#e0a448; font-size:24px; }
+.family-copy{ grid-column:1 / -1; font-size:13px; line-height:2.05; color:#4c7788; margin:12px 0 0; white-space:pre-wrap; word-break:break-word; }
+
+@media (max-width:800px){
+  .family-hero{ align-items:flex-start; }
+  .family-hero .flower{ display:none; }
+  .family-stats{ grid-template-columns:repeat(2, 1fr); gap:8px; }
+  .family-stats .panel{ padding:12px; }
+  .family-summary{ grid-template-columns:42px 1fr; }
+  .family-copy{ font-size:12.5px; }
+}

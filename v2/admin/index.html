@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | 管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header id="appHeader"></header>
+
+<main class="wrap">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">ADMIN</div>
+      <h1>管理</h1>
+      <p class="muted">職員・マスタ・患者さんの登録状況を管理します。削除したデータは消えずに「削除済み」として残り、元に戻せます。</p>
+    </div>
+  </div>
+
+  <div class="tabs" id="adminTabs">
+    <button type="button" data-tab="employees" data-perm="can_employee_manage">職員</button>
+    <button type="button" data-tab="masters" data-perm="can_master_manage">マスタ</button>
+    <button type="button" data-tab="patients" data-perm="can_patient_delete">患者さん</button>
+  </div>
+
+  <!-- 職員 -->
+  <section class="panel hidden" id="tab-employees">
+    <div class="panel-head">
+      <div><h2>職員</h2><p class="muted">ログインは「職員番号＋パスワード」です。役割（職種）と権限は別々に選べます。</p></div>
+      <div class="page-actions">
+        <label class="check"><input type="checkbox" id="showDeletedEmployees"> 削除済みも表示</label>
+        <button type="button" class="primary" onclick="openEmployeeForm()">＋ 職員を登録</button>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="list" id="employeeTable"></table></div>
+  </section>
+
+  <!-- マスタ -->
+  <section class="hidden" id="tab-masters">
+    <div class="two-col">
+      <section class="panel" id="master-department"><p class="empty">読み込み中…</p></section>
+      <section class="panel" id="master-role"><p class="empty">読み込み中…</p></section>
+    </div>
+    <section class="panel" id="master-symptom"><p class="empty">読み込み中…</p></section>
+    <section class="panel">
+      <h2>権限</h2>
+      <p class="muted">それぞれの権限で「できること」を選べます。新しい権限を足すこともできます。</p>
+      <div class="table-wrap"><table class="list" id="permissionTable"></table></div>
+      <form class="chip-add" id="permissionAddForm" style="max-width:420px;">
+        <input class="input" id="newPermissionName" placeholder="新しい権限の名前（例：副管理者）">
+        <button type="submit" class="light small">追加</button>
+      </form>
+    </section>
+  </section>
+
+  <!-- 患者さん -->
+  <section class="panel hidden" id="tab-patients">
+    <div class="panel-head">
+      <div><h2>患者さん</h2><p class="muted">退院した方・削除した方も含めた一覧です。</p></div>
+      <button type="button" class="primary hidden" id="adminNewPatientBtn"
+        onclick="openPatientForm({ mode: 'create', onDone: loadAdminPatients })">＋ 患者さんを登録</button>
+    </div>
+    <div class="table-wrap"><table class="list" id="patientTable"></table></div>
+  </section>
+
+  <div class="panel hidden" id="noPermission"><p class="empty">この画面を使う権限がありません。</p></div>
+</main>
+<footer>めっちゃかんご　—　つながる安心、ひろがる笑顔。</footer>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/hash.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/ui/layout.js"></script>
+<script src="../shared/js/ui/modal.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/employee.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/symptom.js"></script>
+<script src="../staff/js/patient-form.js"></script>
+<script src="js/employees.js"></script>
+<script src="js/masters.js"></script>
+<script src="js/patients.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

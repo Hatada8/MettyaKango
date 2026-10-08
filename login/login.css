@@ -1,0 +1,112 @@
+/* ログイン画面専用 */
+  /* ---------- portal screen ---------- */
+  .portal{
+    max-width:980px; margin:0 auto; padding:64px 24px 80px;
+    text-align:center;
+  }
+  .portal .brandname{
+    font-size:50px; font-weight:700; letter-spacing:.14em; color:var(--nurse-deep);
+    margin-bottom:14px;
+  }
+  .portal h1{
+    font-size:20px; font-weight:700; line-height:1.5; margin:0 0 6px;
+  }
+  .portal .sub{ color:var(--ink-soft); font-size:14px; margin-bottom:56px; letter-spacing:.03em; }
+
+  .portal-cards{
+    display:grid; grid-template-columns:1fr 1fr; gap:28px;
+    position:relative;
+  }
+  @media(max-width:720px){ .portal-cards{ grid-template-columns:1fr; } }
+
+  .portal-card{
+    background:var(--panel); border-radius:20px; padding:32px 26px;
+    box-shadow:var(--shadow); text-align:left; position:relative; overflow:hidden;
+    border:1px solid var(--line);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .portal-card:hover{ transform:translateY(-4px); box-shadow:0 16px 40px rgba(31,46,43,0.14); }
+  .portal-card .icon{
+    width:52px; height:52px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; margin-bottom:22px;
+  }
+  .portal-card.nurse .icon{ background:var(--nurse-soft); color:var(--nurse-deep); }
+  .portal-card.family .icon{ background:var(--family-soft); color:var(--family-deep); }
+  .portal-card.patient .icon{ background:var(--night-soft); color:var(--night); }
+  .portal-card h2{ font-size:20px; margin:0 0 8px; }
+  .portal-card p{ font-size:13px; color:var(--ink-soft); line-height:1.75; margin:0 0 22px; }
+  .portal-card .enter{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12.5px; font-weight:500; padding:10px 16px; border-radius:10px;
+    color:#fff;
+  }
+  .portal-card.nurse .enter{ background:var(--nurse); }
+  .portal-card.patient .enter{ background:var(--night); }
+  .portal-card.family .enter{ background:var(--family); }
+  .portal-card .enter:hover{ filter:brightness(1.06); }
+
+  .portal-foot{ margin-top:52px; font-size:12px; color:var(--ink-soft); letter-spacing:.05em; }
+
+  .auth-tabs{
+    display:inline-flex; background:var(--bg); border-radius:99px; padding:4px;
+    margin:0 auto 32px; gap:2px;
+  }
+  .auth-tab{
+    background:transparent; border:none; font-size:13px; font-weight:500; color:var(--ink-soft);
+    padding:9px 26px; border-radius:99px; transition:.15s;
+  }
+  .auth-tab.active{ background:var(--panel); color:var(--ink); box-shadow:0 2px 8px rgba(31,46,43,0.1); }
+
+  /* ---------- 入力欄 ---------- */
+  .login-field{ max-width:360px; margin:0 auto 18px; }
+  .login-label{ font-size:12px; color:var(--ink-soft); text-align:left; margin-bottom:6px; }
+  .login-field input{
+    width:100%; border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:14px; background:#fff;
+  }
+  .login-note{ max-width:360px; margin:0 auto 28px; font-size:11.5px; color:var(--ink-soft); }
+
+  /* デモ用かんたんログイン（あとで消す） */
+  .demo-login{
+    max-width:420px; margin:0 auto 16px; padding:10px 12px; border:1px dashed #D9A441; border-radius:12px;
+    background:rgba(255,251,240,.92); display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px;
+  }
+  .demo-login span{ font-size:11px; font-weight:700; color:#A97A1F; margin-right:4px; }
+  .demo-login button{
+    font-size:12px; padding:6px 12px; border-radius:8px; background:#fff; border:1px solid var(--line); color:var(--ink);
+  }
+  .demo-login button:hover{ border-color:var(--nurse); color:var(--nurse-deep); }
+
+  /* ---------- login background slideshow ---------- */
+  #screen-login .portal{ position:relative; z-index:1; }
+  .login-hero{ position:relative; overflow:hidden; }
+  .login-title{ padding-bottom:0; }
+  .login-title .sub{ margin-bottom:28px; }
+  .login-hero-inner{ padding-top:40px; padding-bottom:24px; }
+  .login-cards{ padding-top:32px; }
+  .login-bg{ position:absolute; inset:0; z-index:0; overflow:hidden; background:var(--bg); }
+  .login-bg .slide{
+    position:absolute; inset:0; background-size:cover; background-position:center;
+    opacity:0; transition:opacity 1.8s ease;
+    animation:loginDrift 14s ease-in-out infinite alternate;
+  }
+  .login-bg .slide.on{ opacity:1; }
+  .login-bg::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(239,243,241,1) 0%, rgba(239,243,241,.55) 22%, rgba(239,243,241,.78) 75%, rgba(239,243,241,1) 100%);
+  }
+  @keyframes loginDrift{ from{ transform:scale(1.03); } to{ transform:scale(1.10); } }
+  .login-dots{
+    position:absolute; left:50%; bottom:12px; transform:translateX(-50%);
+    display:flex; gap:10px; z-index:2;
+  }
+  .login-dots .dot{
+    width:10px; height:10px; padding:0; border-radius:50%;
+    background:rgba(31,46,43,.28); transition:.2s;
+  }
+  .login-dots .dot.on{ background:var(--nurse); width:26px; border-radius:99px; }
+  .login-dots .dot:focus-visible{ outline:2px solid var(--nurse-deep); outline-offset:3px; }
+  #screen-login:not(.active) .login-dots{ display:none; }
+  @media (prefers-reduced-motion: reduce){
+    .login-bg .slide{ animation:none; transition:none; }
+  }

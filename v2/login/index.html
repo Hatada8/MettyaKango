@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | ログイン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+<header class="header">
+  <span class="brand">
+    <span class="brand-icon" aria-hidden="true">♡</span>
+    <span><b>めっちゃかんご</b><small>ログイン</small></span>
+  </span>
+</header>
+
+<main class="wrap login-wrap">
+  <section class="login-hero">
+    <div class="eyebrow">看護記録を、家族の安心へ。</div>
+    <h1>大切な人の今日を、<br>もっと近くに。</h1>
+    <p>看護師とご家族をつなぎ、病院での毎日をわかりやすく共有します。</p>
+    <div class="landscape" aria-hidden="true">
+      <span>♡</span><b>めっちゃかんご</b><small>つながる安心、ひろがる笑顔。</small>
+    </div>
+  </section>
+
+  <section class="panel login-panel">
+    <div class="logo-heart" aria-hidden="true">♡</div>
+    <h2>おかえりなさい</h2>
+    <p class="muted">ログインする方を選んでください</p>
+
+    <div class="tabs" role="tablist">
+      <button type="button" id="tabStaff" class="active" onclick="setLoginRole('staff')">職員</button>
+      <button type="button" id="tabFamily" onclick="setLoginRole('family')">ご家族</button>
+    </div>
+
+    <!-- 職員：職員番号＋パスワード -->
+    <form id="staffForm" autocomplete="on">
+      <label class="field"><span>職員番号</span>
+        <input id="staffNo" inputmode="numeric" pattern="[0-9]*" placeholder="例：10001" autocomplete="username" required>
+      </label>
+      <label class="field"><span>パスワード</span>
+        <input id="staffPassword" type="password" placeholder="パスワード" autocomplete="current-password" required>
+      </label>
+      <button class="primary full" type="submit">職員としてログイン →</button>
+      <p class="muted tiny">アカウントは管理者が登録します。</p>
+    </form>
+
+    <!-- 家族：患者ID＋メールアドレス＋パスワード -->
+    <form id="familyForm" class="hidden" autocomplete="on">
+      <label class="field"><span>患者ID（病院からお伝えした番号）</span>
+        <input id="familyPatientNo" inputmode="numeric" pattern="[0-9]*" placeholder="例：100001" required>
+      </label>
+      <label class="field"><span>メールアドレス</span>
+        <input id="familyEmail" type="email" placeholder="例：family@example.com" autocomplete="email" required>
+      </label>
+      <label class="field"><span>パスワード</span>
+        <input id="familyPassword" type="password" placeholder="パスワード" autocomplete="current-password" required>
+      </label>
+      <button class="primary full" type="submit">ご家族としてログイン →</button>
+      <p class="muted tiny">初めての方は、入力したメールアドレスとパスワードでそのまま登録されます。</p>
+    </form>
+
+    <!-- ▼▼▼ デモ用のかんたんログイン（あとで消す：この div と js/demo-login.js を削除） ▼▼▼ -->
+    <div class="demo-login" id="demoLogin">
+      <p>デモ用かんたんログイン</p>
+      <div>
+        <button type="button" class="light small" onclick="demoLogin('admin')">管理者</button>
+        <button type="button" class="light small" onclick="demoLogin('nurse')">看護師（一般）</button>
+        <button type="button" class="light small" onclick="demoLogin('family')">ご家族</button>
+      </div>
+    </div>
+    <!-- ▲▲▲ デモ用ここまで ▲▲▲ -->
+  </section>
+</main>
+<footer>めっちゃかんご　—　つながる安心、ひろがる笑顔。</footer>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/hash.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/employee.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/family.js"></script>
+<script src="js/login.js"></script>
+<script src="js/demo-login.js"></script>
+</body>
+</html>

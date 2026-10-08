@@ -1,0 +1,39 @@
+/* ログイン画面 */
+.login-wrap{
+  max-width:1100px; display:grid; grid-template-columns:1.1fr .9fr; gap:34px; align-items:center;
+  min-height:calc(100vh - 160px);
+}
+.login-hero h1{ font-size:36px; line-height:1.5; margin:6px 0; }
+.login-hero > p{ color:var(--muted); line-height:1.9; }
+.landscape{
+  height:250px; margin:24px 0; background:linear-gradient(#dff6ff,#f9ffff); border-radius:28px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;
+}
+.landscape::before,.landscape::after{ content:""; position:absolute; width:140%; height:130px; bottom:-75px; border-radius:50%; background:#c7eee0; }
+.landscape::after{ background:#a9dfd6; bottom:-100px; left:30%; }
+.landscape span{ font-size:70px; color:#17aaa2; z-index:1; line-height:1.1; }
+.landscape b{ font-size:24px; z-index:1; }
+.landscape small{ font-size:11px; color:#6b98a7; z-index:1; margin-top:6px; }
+
+.login-panel{ padding:30px; text-align:center; }
+.login-panel h2{ margin:0; font-size:22px; }
+.login-panel .tabs{ margin:20px 0; }
+.login-panel form{ text-align:left; }
+.login-panel form .tiny{ text-align:center; margin:10px 0 0; }
+.logo-heart{
+  margin:0 auto 10px; width:50px; height:50px; display:grid; place-items:center;
+  background:#e1faf4; color:#13a9a0; border-radius:16px; font-size:30px;
+}
+
+/* デモ用かんたんログイン（あとで消す） */
+.demo-login{ margin-top:20px; padding:12px; border:1px dashed #f0c86f; background:#fffbf0; border-radius:12px; }
+.demo-login p{ margin:0 0 8px; font-size:11px; font-weight:700; color:var(--yellow); }
+.demo-login div{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+
+@media (max-width:800px){
+  .login-wrap{ display:flex; flex-direction:column; min-height:0; gap:8px; }
+  .login-hero h1{ font-size:27px; }
+  .landscape{ height:150px; margin:16px 0 4px; }
+  .landscape span{ font-size:46px; }
+  .login-panel{ width:100%; padding:22px 18px; }
+}

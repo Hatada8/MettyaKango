@@ -1,0 +1,14 @@
+/* 管理画面 */
+.master-list{ display:flex; flex-direction:column; gap:6px; max-height:420px; overflow-y:auto; margin-bottom:10px; }
+.master-row{ display:flex; gap:6px; align-items:center; }
+.master-row .num{ width:34px; flex:none; font-size:11px; color:#8aa4af; text-align:right; }
+.master-row input{ flex:1; min-width:0; }
+.master-row select{ width:130px; flex:none; }
+.master-row.deleted input{ color:#a9bcc5; text-decoration:line-through; }
+.status{ font-size:11px; }
+table.list td.center,table.list th.center{ text-align:center; }
+table.list input[type=checkbox]{ width:16px; height:16px; accent-color:var(--teal); }
+
+@media (max-width:800px){
+  .master-row select{ width:96px; }
+}

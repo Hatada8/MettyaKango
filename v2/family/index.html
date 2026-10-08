@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>めっちゃかんご | ご家族のページ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="family.css">
+</head>
+<body>
+<header id="appHeader"></header>
+
+<main class="wrap">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">YOUR FAMILY UPDATE</div>
+      <h1>こんにちは 🌷</h1>
+      <p class="muted" id="leadText">病院での毎日の様子をお届けします。</p>
+    </div>
+    <span class="date-chip" id="todayChip"></span>
+  </div>
+
+  <section class="panel family-hero" id="hero"><p class="empty">読み込み中…</p></section>
+
+  <div class="family-stats" id="familyStats"></div>
+
+  <section class="panel family-summary hidden" id="summaryPanel">
+    <div class="sun" aria-hidden="true">☀</div>
+    <div><h2>看護師からのまとめ</h2><p class="muted" id="summaryMeta"></p></div>
+    <p class="family-copy" id="summaryText"></p>
+  </section>
+
+  <div class="two-col">
+    <section class="panel">
+      <h2>看護師からのお知らせ</h2>
+      <p class="muted">病棟の看護師が、ご家族向けに書いた記録です。</p>
+      <div class="timeline" id="noticeList"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><h2>看護師へのメッセージ</h2><p class="muted">気になることがあれば、お気軽にどうぞ。</p></div>
+        <button type="button" class="light small" onclick="loadFamilyChat()">更新</button>
+      </div>
+      <div class="chat-box" id="chatBox"></div>
+      <form class="chat-form" id="chatForm">
+        <textarea class="input" id="chatText" placeholder="メッセージを入力"></textarea>
+        <button type="submit" class="primary">送信</button>
+      </form>
+    </section>
+  </div>
+</main>
+<footer>めっちゃかんご　—　つながる安心、ひろがる笑顔。</footer>
+
+<script src="../shared/js/config.js"></script>
+<script src="../shared/js/utils.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/session.js"></script>
+<script src="../shared/js/ui/layout.js"></script>
+<script src="../shared/js/ui/chat-view.js"></script>
+<script src="../shared/js/api/master.js"></script>
+<script src="../shared/js/api/patient.js"></script>
+<script src="../shared/js/api/memo.js"></script>
+<script src="../shared/js/api/ai-summary.js"></script>
+<script src="../shared/js/api/chat.js"></script>
+<script src="js/main.js"></script>
+<script src="js/chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+/* ---------------- 共通カレンダー部品 ---------------- */
+.mini-calendar{
+  width:min(100%, 300px); margin:0 auto; box-sizing:border-box;
+  background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  padding:14px 12px 12px; box-shadow:var(--shadow);
+}
+.mini-calendar .cal-header{
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding:0 2px;
+}
+.mini-calendar .cal-title{ font-size:14px; font-weight:700; letter-spacing:.02em; font-family:'Shippori Mincho', serif; }
+.mini-calendar .cal-nav{
+  width:26px; height:26px; border-radius:50%; background:transparent; color:var(--ink-soft);
+  font-size:16px; line-height:1; padding:0; display:flex; align-items:center; justify-content:center;
+  transition:.12s;
+}
+.mini-calendar .cal-nav:hover{ background:var(--nurse-soft); color:var(--nurse-deep); }
+.mini-calendar .cal-weekdays{
+  display:grid; grid-template-columns:repeat(7, 1fr); margin-bottom:2px;
+  font-size:10.5px; color:var(--ink-soft); text-align:center; letter-spacing:.03em;
+}
+.mini-calendar .cal-grid{ display:grid; grid-template-columns:repeat(7, 1fr); row-gap:2px; }
+.mini-calendar .cal-cell{
+  position:relative; aspect-ratio:1; min-width:0; width:100%; margin:0 auto;
+  border-radius:50%; background:transparent;
+  font-size:12.5px; font-weight:500; font-family:'JetBrains Mono', monospace; padding:0;
+  color:var(--ink); display:flex; align-items:center; justify-content:center;
+  transition:background .12s, color .12s;
+}
+.mini-calendar .cal-cell.empty{ visibility:hidden; }
+.mini-calendar .cal-cell:not(.empty):not(.disabled):not(.selected):hover{ background:var(--nurse-soft); }
+.mini-calendar .cal-cell.today{ color:var(--nurse-deep); font-weight:700; box-shadow:inset 0 0 0 1.5px var(--nurse); }
+.mini-calendar .cal-cell.selected{ background:var(--nurse); color:#fff; font-weight:700; }
+.mini-calendar .cal-cell.selected.today{ color:#fff; box-shadow:none; }
+.mini-calendar .cal-cell.disabled{ color:var(--line); cursor:default; }
+.mini-calendar .cal-dot{
+  position:absolute; bottom:3px; left:50%; transform:translateX(-50%);
+  width:4px; height:4px; border-radius:50%; background:var(--nurse);
+}
+.mini-calendar .cal-cell.selected .cal-dot{ background:#fff; }
+.mini-calendar .cal-cell.disabled .cal-dot{ background:var(--line); }
