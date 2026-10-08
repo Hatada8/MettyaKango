@@ -97,7 +97,7 @@
   .login-bg .slide.on{ opacity:1; }
   .login-bg::after{
     content:''; position:absolute; inset:0;
-    background:linear-gradient(180deg, rgba(239,243,241,1) 0%, rgba(239,243,241,.55) 22%, rgba(239,243,241,.78) 75%, rgba(239,243,241,1) 100%);
+    background:linear-gradient(180deg, rgba(239,243,241,.78) 75%, rgba(239,243,241,1) 100%);
   }
   @keyframes loginDrift{ from{ transform:scale(1.03); } to{ transform:scale(1.10); } }
   .login-dots{
