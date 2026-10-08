@@ -1,5 +1,5 @@
 /* 共通：看護師画面と家族画面の両方で使う部品（カード・AI要約・チャット・トースト） */
-  .main{ padding:28px 32px 60px; max-width:920px; }
+  .main{ padding:28px 3% 60px; width:100%; max-width:100%; box-sizing:border-box; }
 
   .card{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);

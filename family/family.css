@@ -64,3 +64,6 @@
 }
 
 .chat-closed{ margin:12px 0 0; padding:10px 14px; border-radius:10px; background:#EEF2F4; color:var(--ink-soft); font-size:12.5px; line-height:1.7; }
+
+/* 画面の幅に合わせて広がる（余白は%で取る） */
+.family-main{ padding-top:32px; }

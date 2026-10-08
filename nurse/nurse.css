@@ -1,6 +1,6 @@
 /* 看護師画面専用 */
   /* ---------- layout shells ---------- */
-  .shell{ display:grid; grid-template-columns:280px 1fr; min-height:calc(100vh - 61px); }
+  .shell{ display:grid; grid-template-columns:minmax(240px, 18%) 1fr; min-height:calc(100vh - 61px); }
   @media(max-width:860px){ .shell{ grid-template-columns:1fr; } }
 
   .sidebar{

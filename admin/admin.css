@@ -1,6 +1,6 @@
 /* 管理画面専用（v1 の見た目に合わせた色） */
 .appbar-right{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
-.admin-main{ max-width:1000px; margin:0 auto; padding-top:28px; }
+.admin-main{ max-width:100%; margin:0 auto; padding-top:28px; }
 .admin-main > .muted{ margin:-18px 0 20px; }
 .admin-main .auth-tabs{ display:flex; width:fit-content; max-width:100%; margin:0 0 28px; background:var(--panel); border:1px solid var(--line); }
 .admin-main .auth-tab.active{ background:var(--nurse); color:#fff; }

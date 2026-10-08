@@ -1,7 +1,7 @@
 /* ログイン画面専用 */
   /* ---------- portal screen ---------- */
   .portal{
-    max-width:980px; margin:0 auto; padding:64px 24px 80px;
+    max-width:100%; margin:0 auto; padding:64px 5% 80px;
     text-align:center;
   }
   .portal .brandname{

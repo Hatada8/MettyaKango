@@ -13,18 +13,24 @@ function demoFamilyEmail(patientNo){
 
 /* プルダウンの値 'staff:10002' / 'family:100003' からログインする */
 /* 職員の病院コードを調べてからログインする */
-async function demoStaffLogin(no){
+async function demoStaffLogin(no, hospitalCode){
   try{
-    const emp = await findEmployeeByNo(no);
-    const hospitals = emp ? await db.select('hospital_master', `hospital_id=eq.${emp.hospital_id}`) : [];
-    if(!hospitals.length){ showToast('職員の病院が見つかりません'); return; }
-    loginStaff(no, demoPassword(no), String(hospitals[0].hospital_code));
+    if(!hospitalCode){
+      // 病院コードが指定されていないときは、最初の病院を使う
+      const hospitals = await db.select('hospital_master', 'order=sort_order,hospital_id&limit=1');
+      if(!hospitals.length){ showToast('病院が見つかりません'); return; }
+      hospitalCode = String(hospitals[0].hospital_code);
+    }
+    loginStaff(no, demoPassword(no), String(hospitalCode));
   }catch(e){ showError(e, 'ログインできませんでした'); }
 }
 
 function demoLogin(key){
-  const [kind, no] = String(key).split(':');
-  if(kind === 'staff') demoStaffLogin(no);
+  // 'staff:病院コード:職員番号'（古い 'staff:職員番号' も使える）／ 'family:患者ID'
+  const parts = String(key).split(':');
+  const kind = parts[0];
+  const no = parts[parts.length - 1];
+  if(kind === 'staff') demoStaffLogin(no, parts.length > 2 ? parts[1] : null);
   else if(kind === 'family') loginFamily(no, demoFamilyEmail(no), '1234');
   // 古い呼び方（admin / nurse / family）も使えるようにしておく
   else if(key === 'admin') demoStaffLogin('10001');
@@ -37,13 +43,13 @@ async function initDemoLogin(){
   if(!select) return;
   try{
     const [staff, patients] = await Promise.all([
-      db.select('employee_master', 'select=employee_no,employee_name,role_master(role_name),permission_master(permission_name)&order=employee_no'),
+      db.select('employee_master', 'select=employee_no,employee_name,role_master(role_name),permission_master(permission_name),hospital_master(hospital_code,hospital_name)&order=hospital_id,employee_no'),
       db.select('patient_master', 'select=patient_no,patient_name&order=patient_no')
     ]);
     select.innerHTML = `
       <option value="">アカウントを選ぶ…</option>
       <optgroup label="職員">
-        ${staff.map(s => `<option value="staff:${s.employee_no}">${esc(s.employee_name)}（${esc(s.role_master ? s.role_master.role_name : '')}${s.permission_master ? '・' + esc(s.permission_master.permission_name) : ''}）</option>`).join('')}
+        ${staff.map(s => `<option value="staff:${s.hospital_master ? s.hospital_master.hospital_code : ''}:${s.employee_no}">${esc(s.employee_name)}（${esc(s.role_master ? s.role_master.role_name : '')}${s.permission_master ? '・' + esc(s.permission_master.permission_name) : ''}）</option>`).join('')}
       </optgroup>
       <optgroup label="ご家族">
         ${patients.map(p => `<option value="family:${p.patient_no}">${esc(p.patient_name)} さんのご家族</option>`).join('')}

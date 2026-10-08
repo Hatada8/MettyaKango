@@ -32,8 +32,8 @@ async function loginStaff(employeeNo, password, hospitalCode){
   try{
     const hospital = await findHospitalByCode(hospitalCode);
     if(!hospital){ showToast('病院コードが見つかりません'); return; }
-    const emp = await findEmployeeByNo(employeeNo);
-    if(!emp || emp.hospital_id !== hospital.hospital_id){ showToast('この病院に、その職員番号はありません'); return; }
+    const emp = await findEmployeeByNo(employeeNo, hospital.hospital_id);
+    if(!emp){ showToast('この病院に、その職員番号はありません'); return; }
     if(emp.password_hash !== await sha256Hex(password)){ showToast('パスワードが違います'); return; }
     try{ localStorage.setItem('mecchakango_hospital_code', hospitalCode); }catch(e){}
     goTo('../nurse/index.html', buildStaffSession(emp));

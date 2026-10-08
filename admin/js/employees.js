@@ -41,7 +41,7 @@ function openEmployeeForm(employeeId){
     submitLabel: isNew ? '登録する' : '保存する',
     body: `
       <div class="field-row">
-        <label class="field"><span>職員番号（ログインID・数字）</span>
+        <label class="field"><span>職員番号（ログインID・数字。病院ごとに付けます）</span>
           <input name="employee_no" inputmode="numeric" value="${esc(e.employee_no ?? '')}" ${isNew ? '' : 'readonly'} required></label>
         <label class="field"><span>パスワード${isNew ? '' : '（変えるときだけ入力）'}</span>
           <input name="password" type="password" autocomplete="new-password" ${isNew ? 'required' : ''}></label>
@@ -79,7 +79,7 @@ function openEmployeeForm(employeeId){
         await loadEmployees();
         return true;
       }catch(err){
-        if(isDuplicateError(err)) toast('この職員番号はすでに使われています');
+        if(isDuplicateError(err)) toast('この病院では、この職員番号はすでに使われています');
         else showError(err, '保存できませんでした');
         return false;
       }

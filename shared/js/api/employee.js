@@ -1,8 +1,9 @@
 /* 職員（employee_master） */
 const EMPLOYEE_SELECT = 'select=*,role_master(role_name),permission_master(*),department_master(department_name)';
 
-async function findEmployeeByNo(employeeNo){
-  const rows = await db.select('employee_master', `${EMPLOYEE_SELECT}&employee_no=eq.${Number(employeeNo)}`);
+/* 職員番号は病院ごとに付ける（同じ番号を別の病院で使ってもよい） */
+async function findEmployeeByNo(employeeNo, hospitalId){
+  const rows = await db.select('employee_master', `${EMPLOYEE_SELECT}&employee_no=eq.${Number(employeeNo)}&hospital_id=eq.${Number(hospitalId)}`);
   return rows[0] || null;
 }
 
