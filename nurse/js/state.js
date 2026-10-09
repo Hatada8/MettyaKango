@@ -25,6 +25,8 @@ function setSidebar(open){
   if(!shell) return;
   shell.classList.toggle('sidebar-collapsed', !open);
   if(btn) btn.setAttribute('aria-expanded', String(open));
+  // スマホでモーダルとして開いている間は、後ろの画面をスクロールさせない
+  document.body.classList.toggle('no-scroll', open && isSmallScreen());
 }
 
 function toggleSidebar(){
@@ -35,3 +37,6 @@ function toggleSidebar(){
 function initSidebar(){
   setSidebar(!isSmallScreen());
 }
+
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && isSmallScreen()) setSidebar(false); });
+window.addEventListener('resize', () => { if(!isSmallScreen()) document.body.classList.remove('no-scroll'); });

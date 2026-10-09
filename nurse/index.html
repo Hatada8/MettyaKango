@@ -15,7 +15,7 @@
   <section id="screen-nurse">
     <div class="appbar">
       <div class="brand">
-        <button type="button" class="menu-btn" id="sidebarToggle" aria-controls="patientSidebar" aria-expanded="true" aria-label="患者一覧を開閉する" onclick="toggleSidebar()">☰</button>
+        <button type="button" class="menu-btn" id="sidebarToggle" aria-controls="patientSidebar" aria-haspopup="dialog" aria-expanded="false" onclick="toggleSidebar()"><span class="menu-icon">☰</span><span>患者一覧</span></button>
         <span class="mark serif">めっちゃかんご</span>
         <span class="tag">NURSE MODE</span>
       </div>
@@ -28,7 +28,12 @@
     </div>
 
     <div class="shell" id="nurseShell">
-      <div class="sidebar" id="patientSidebar">
+      <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="setSidebar(false)"></div>
+      <div class="sidebar" id="patientSidebar" role="dialog" aria-label="患者一覧">
+        <div class="sidebar-modal-head">
+          <b>患者一覧</b>
+          <button type="button" class="sidebar-close" aria-label="閉じる" onclick="setSidebar(false)">×</button>
+        </div>
         <div class="label" id="patientCountLabel">担当患者</div>
         <div class="sidebar-search-row">
           <input type="text" id="patientSearch" placeholder="🔍 患者名で検索" oninput="renderPatientList()">

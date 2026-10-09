@@ -265,15 +265,39 @@
   .ai-compare .arrow{ color:var(--ink-soft); }
   .ai-compare .ratio{ margin-left:auto; font-size:12px; color:var(--ink-soft); }
 
-  /* ---------- 患者一覧の開閉（☰）：スマホ（幅 860px 以下）だけ ---------- */
-  .menu-btn{ display:none; }   /* PC では出さない（患者一覧はいつも見える） */
+  /* ---------- 患者一覧：スマホ（幅 860px 以下）では「患者一覧」ボタン → モーダルで選ぶ ---------- */
+  .menu-btn{ display:none; }                 /* PC では出さない（患者一覧はいつも見える） */
+  .sidebar-backdrop, .sidebar-modal-head{ display:none; }
   @media(max-width:860px){
     .menu-btn{
-      display:inline-flex; align-items:center; justify-content:center;
-      align-self:center; width:38px; height:38px; border-radius:10px; font-size:19px; line-height:1;
-      background:var(--bg); border:1px solid var(--line); color:var(--ink); margin-right:2px;
+      display:inline-flex; align-items:center; gap:6px; align-self:center; height:38px; padding:0 14px;
+      border-radius:10px; font-size:13px; font-weight:700; line-height:1;
+      background:var(--bg); border:1px solid var(--line); color:var(--ink); margin-right:2px; white-space:nowrap;
     }
+    .menu-btn .menu-icon{ font-size:17px; }
     .menu-btn:hover{ border-color:var(--nurse); background:var(--nurse-soft); }
-    .shell.sidebar-collapsed{ grid-template-columns:1fr; }
-    .shell.sidebar-collapsed .sidebar{ display:none; }
+
+    /* 閉じているとき */
+    .shell.sidebar-collapsed .sidebar,
+    .shell.sidebar-collapsed .sidebar-backdrop{ display:none; }
+
+    /* 開いているとき：画面の上にモーダルとして重ねる */
+    .shell:not(.sidebar-collapsed) .sidebar-backdrop{
+      display:block; position:fixed; inset:0; z-index:90; background:rgba(20,34,31,.45);
+    }
+    .shell:not(.sidebar-collapsed) .sidebar{
+      position:fixed; z-index:100; left:4%; right:4%; top:5%; max-height:90vh; width:auto;
+      border:1px solid var(--line); border-radius:16px; box-shadow:0 18px 50px rgba(0,0,0,.28);
+      padding:0 16px 16px; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    }
+    .sidebar-modal-head{
+      display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:1;
+      background:var(--panel); padding:14px 0 10px; margin-bottom:4px; font-size:16px;
+    }
+    .sidebar-close{
+      width:38px; height:38px; border-radius:50%; font-size:22px; line-height:1;
+      background:var(--bg); border:1px solid var(--line); color:var(--ink);
+    }
+    /* モーダルの中は、5人で止めずに、全体をスクロールさせる */
+    #patientListWrap{ max-height:none !important; overflow:visible; }
   }
