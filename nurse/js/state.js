@@ -16,18 +16,15 @@ function currentStay(){
 /* v1 の旗（high / mid / low）の色を、状態の番号（3 / 2 / 1）で使う */
 const FLAG_CLASS = { 1: 'low', 2: 'mid', 3: 'high' };
 
-/* 患者一覧の開閉（☰）。PC は前回の状態を覚える。スマホは初期は閉じておく */
+/* 患者一覧の開閉（☰）。スマホ（幅 860px 以下）だけ。初期は閉じておく。PC はいつも開いたまま */
 function isSmallScreen(){ return window.matchMedia('(max-width: 860px)').matches; }
 
-function setSidebar(open, { remember = true } = {}){
+function setSidebar(open){
   const shell = document.getElementById('nurseShell');
   const btn = document.getElementById('sidebarToggle');
   if(!shell) return;
   shell.classList.toggle('sidebar-collapsed', !open);
   if(btn) btn.setAttribute('aria-expanded', String(open));
-  if(remember && !isSmallScreen()){
-    try{ localStorage.setItem('mecchakango_sidebar', open ? 'open' : 'closed'); }catch(e){}
-  }
 }
 
 function toggleSidebar(){
@@ -36,7 +33,5 @@ function toggleSidebar(){
 }
 
 function initSidebar(){
-  let saved = null;
-  try{ saved = localStorage.getItem('mecchakango_sidebar'); }catch(e){}
-  setSidebar(isSmallScreen() ? false : saved !== 'closed', { remember: false });
+  setSidebar(!isSmallScreen());
 }
