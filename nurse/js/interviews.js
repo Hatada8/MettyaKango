@@ -50,6 +50,7 @@ function backFromInterviews(){
 async function loadInterviewMonth(){
   try{
     const range = calMonthRange(ivYear, ivMonth);
+    await loadInterviewHours();
     const [list, booked, pending] = await Promise.all([
       listInterviews({ fromDate: range.from, toDate: range.to, patientId: ivPatientId }),
       bookedInterviewSlots(range.from, range.to),
@@ -135,13 +136,13 @@ function renderStaffDayPanel(){
   if(!ivSelected){ box.classList.add('hidden'); box.innerHTML = ''; return; }
   const items = ivMonthList.filter(m => interviewDate(m.start_at) === ivSelected);
   const d = ivSelected.split('-').map(Number);
-  const canAdd = ivSelected >= todayISO() && ![0, 6].includes(calWeekday(ivSelected));
+  const canAdd = ivSelected >= todayISO() && isInterviewDay(ivSelected);
   box.classList.remove('hidden');
   box.innerHTML = `
     <h4>${d[1]}月${d[2]}日（${['日', '月', '火', '水', '木', '金', '土'][calWeekday(ivSelected)]}）の面談 ${items.length}件</h4>
     ${items.length ? `<div class="iv-list">${items.map(m => interviewItemHtml(m, false)).join('')}</div>` : '<p class="muted">この日の面談はありません。</p>'}
     ${canAdd ? '<p style="margin:12px 0 0;"><button type="button" class="iv-small-btn primary" onclick="openAddInterview()">＋ この日に予定を追加</button></p>'
-             : '<p class="muted" style="margin-top:10px;">予定を追加できるのは、今日以降の平日です。</p>'}`;
+             : '<p class="muted" style="margin-top:10px;">予定を追加できるのは、今日以降で、面談を受け付けている曜日です。</p>'}`;
 }
 
 async function changeInterview(id, statusId){
@@ -163,7 +164,7 @@ async function openAddInterview(){
   let patients = [];
   try{ patients = await listAdmittedPatients(); }
   catch(e){ showError(e, '患者さんを読み込めませんでした'); return; }
-  const free = interviewTimes().filter(t => !ivBooked.has(`${ivSelected} ${t}`));
+  const free = interviewTimes(ivSelected).filter(t => !ivBooked.has(`${ivSelected} ${t}`));
   if(!free.length){ showToast('この日は満席です'); return; }
   openModal({
     title: `${fmtDate(ivSelected)} に面談を追加`,

@@ -6,18 +6,61 @@
 
 const INTERVIEW_STATUS = { REQUESTED: 1, CONFIRMED: 2, CANCELLED: 3, DONE: 4 };
 
-/* 面談を受け付ける時間帯（日本時間）：13:00〜17:00、30分ごと */
-const INTERVIEW_START_HOUR = 13;
-const INTERVIEW_END_HOUR = 17;
-const INTERVIEW_STEP_MIN = 30;
+/* 面談を受け付ける時間は、曜日ごとのマスタ（interview_hours_master）で決める（管理者が設定）。
+   マスタがまだないとき（add_interview_hours.sql を実行する前）は、平日の 13:00〜17:00・30分ごとにする */
+const INTERVIEW_DEFAULT_HOURS = [0, 1, 2, 3, 4, 5, 6].map(w => ({
+  weekday: w, is_open: (w >= 1 && w <= 5) ? 1 : 0, start_time: '13:00:00', end_time: '17:00:00', slot_min: 30
+}));
+let interviewHours = INTERVIEW_DEFAULT_HOURS;
+const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
 
-/* "13:00", "13:30", … "16:30" の一覧 */
-function interviewTimes(){
-  const times = [];
-  for(let m = INTERVIEW_START_HOUR * 60; m < INTERVIEW_END_HOUR * 60; m += INTERVIEW_STEP_MIN){
-    times.push(`${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`);
+async function loadInterviewHours(){
+  try{
+    const rows = await db.select('interview_hours_master', 'order=weekday');
+    interviewHours = rows.length ? rows : INTERVIEW_DEFAULT_HOURS;
+  }catch(e){
+    interviewHours = INTERVIEW_DEFAULT_HOURS;
   }
+  return interviewHours;
+}
+
+/* "2026-10-12" の曜日（0 日〜6 土） */
+function interviewWeekday(dateISO){
+  const [y, m, d] = dateISO.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+function interviewHoursFor(dateISO){
+  return interviewHours.find(h => h.weekday === interviewWeekday(dateISO)) || null;
+}
+
+/* "13:30:00" → 780（分） */
+function timeToMin(t){
+  const [h, m] = String(t).split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+function minToTime(m){
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+/* その日に受け付ける時間の一覧。"13:00", "13:30", … （休みの曜日は空） */
+function interviewTimes(dateISO){
+  const h = interviewHoursFor(dateISO);
+  if(!h || Number(h.is_open) !== 1) return [];
+  const times = [];
+  for(let m = timeToMin(h.start_time); m + h.slot_min <= timeToMin(h.end_time); m += h.slot_min) times.push(minToTime(m));
   return times;
+}
+
+/* その日の1回の面談の長さ（分） */
+function interviewSlotMin(dateISO){
+  const h = interviewHoursFor(dateISO);
+  return h ? h.slot_min : 30;
+}
+
+/* 受け付けている日か */
+function isInterviewDay(dateISO){
+  return interviewTimes(dateISO).length > 0;
 }
 
 /* 日付 "2026-10-12" と時刻 "13:30"（日本時間）→ データベースに入れる日時 */
@@ -68,7 +111,7 @@ async function createInterview({ patientId, familyId = null, employeeId = null, 
       interview_type_id: typeId,
       interview_status_id: employeeId ? INTERVIEW_STATUS.CONFIRMED : INTERVIEW_STATUS.REQUESTED,
       start_at: interviewStartAt(dateISO, time),
-      duration_min: INTERVIEW_STEP_MIN,
+      duration_min: interviewSlotMin(dateISO),
       note: note.trim() || null
     });
     return { row };

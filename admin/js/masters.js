@@ -11,6 +11,7 @@ const PERMISSION_FLAGS = [
 async function loadMasterEditors(){
   try{
     await loadMasters();
+    renderInterviewHoursEditor();
     renderMasterEditor('hospital', '病院（病院コードと名前）', '新しい病院の名前', false, true);
     renderMasterEditor('department', '分野', '新しい分野（例：泌尿器科）');
     renderMasterEditor('role', '役割（職種）', '新しい役割（例：臨床検査技師）');
@@ -149,3 +150,56 @@ $('permissionAddForm').addEventListener('submit', async e => {
     await loadMasterEditors();
   }catch(err){ showError(err, '追加できませんでした'); }
 });
+
+/* ---- 面談の受付時間（曜日ごと）：管理者だけが設定できる ---- */
+const SLOT_CHOICES = [15, 20, 30, 45, 60, 90];
+
+async function renderInterviewHoursEditor(){
+  const box = $('master-interview-hours');
+  let rows;
+  try{
+    rows = await db.select('interview_hours_master', 'order=weekday');
+  }catch(e){
+    box.innerHTML = `
+      <h3><span class="n">●</span> 面談の受付時間（曜日ごと）</h3>
+      <p class="empty">まだ使えません。v2/db/add_interview_hours.sql を実行してください。</p>`;
+    return;
+  }
+  const hhmm = t => String(t).slice(0, 5);
+  box.innerHTML = `
+    <h3><span class="n">●</span> 面談の受付時間（曜日ごと）</h3>
+    <p class="muted" style="margin-top:-6px;">ご家族がカレンダーで予約できる曜日と時間です。「受付する」を外した曜日は予約できません。1回の長さごとに、開始から終了までを区切って予約枠になります（終了時刻ちょうどの枠は作りません）。すでに入っている予約は変わりません。</p>
+    <div class="table-wrap">
+      <table class="list hours-table">
+        <thead><tr><th>曜日</th><th class="center">受付する</th><th>開始</th><th>終了</th><th>1回の長さ</th><th></th></tr></thead>
+        <tbody>${rows.map(r => `
+          <tr data-weekday="${r.weekday}">
+            <td><b class="${r.weekday === 0 ? 'sun-text' : r.weekday === 6 ? 'sat-text' : ''}">${WEEKDAY_NAMES[r.weekday]}曜日</b></td>
+            <td class="center"><input type="checkbox" data-open ${Number(r.is_open) === 1 ? 'checked' : ''} aria-label="${WEEKDAY_NAMES[r.weekday]}曜日を受け付ける"></td>
+            <td><input class="input" type="time" data-start value="${hhmm(r.start_time)}"></td>
+            <td><input class="input" type="time" data-end value="${hhmm(r.end_time)}"></td>
+            <td><select class="input" data-slot>${SLOT_CHOICES.map(n => `<option value="${n}" ${n === r.slot_min ? 'selected' : ''}>${n}分</option>`).join('')}</select></td>
+            <td class="actions"><button type="button" class="light small" onclick="saveInterviewHours(${r.weekday}, this)">保存</button></td>
+          </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+async function saveInterviewHours(weekday, btn){
+  if(!can('can_master_manage')){ toast('この操作は管理者だけができます'); return; }
+  const tr = btn.closest('tr');
+  const isOpen = tr.querySelector('[data-open]').checked;
+  const start = tr.querySelector('[data-start]').value;
+  const end = tr.querySelector('[data-end]').value;
+  const slot = Number(tr.querySelector('[data-slot]').value);
+  if(!start || !end){ toast('開始と終了の時刻を入れてください'); return; }
+  if(timeToMin(end) <= timeToMin(start)){ toast('終了は開始より後にしてください'); return; }
+  if(isOpen && timeToMin(start) + slot > timeToMin(end)){ toast('開始から終了までに、1回の長さが入りません'); return; }
+  try{
+    await db.update('interview_hours_master', `weekday=eq.${weekday}`, {
+      is_open: isOpen ? 1 : 0, start_time: start, end_time: end, slot_min: slot
+    });
+    toast(`${WEEKDAY_NAMES[weekday]}曜日を保存しました`);
+    await renderInterviewHoursEditor();
+  }catch(e){ showError(e, '保存できませんでした'); }
+}

@@ -9,15 +9,14 @@ let ivTime = null;          // 選んだ時間
 let ivBooked = new Set();   // 表示中の月で、すでに埋まっている時間（"YYYY-MM-DD HH:MM"）
 let ivMine = [];            // このご家族の患者さんの予約
 
-/* 受け付ける日：明日以降の平日 */
+/* 受け付ける日：明日以降で、受付時間のマスタで開いている曜日 */
 function ivIsDisabled(date){
   if(date <= todayISO()) return true;
-  const w = calWeekday(date);
-  return w === 0 || w === 6;
+  return !isInterviewDay(date);   // 受付時間のマスタで休みの曜日
 }
 
 function ivFreeTimes(date){
-  return interviewTimes().filter(t => !ivBooked.has(`${date} ${t}`));
+  return interviewTimes(date).filter(t => !ivBooked.has(`${date} ${t}`));
 }
 
 async function refreshInterviews(){
@@ -28,6 +27,7 @@ async function refreshInterviews(){
   if(panel && panel.contains(document.activeElement) && document.activeElement !== panel) return;
   try{
     const range = calMonthRange(ivYear, ivMonth);
+    await loadInterviewHours();
     [ivBooked, ivMine] = await Promise.all([
       bookedInterviewSlots(range.from, range.to),
       listInterviews({ patientId: session.patientId, includeCancelled: true })
@@ -84,7 +84,7 @@ function renderInterviewPanel(){
     <h4>${d[1]}月${d[2]}日（${['日', '月', '火', '水', '木', '金', '土'][calWeekday(ivSelected)]}）の空き時間</h4>
     ${free.length ? '' : '<p class="muted">この日は満席です。ほかの日をお選びください。</p>'}
     <div class="iv-times">
-      ${interviewTimes().map(t => `
+      ${interviewTimes(ivSelected).map(t => `
         <button type="button" class="iv-time ${t === ivTime ? 'on' : ''}" ${free.includes(t) ? '' : 'disabled'}
           onclick="chooseInterviewTime('${t}')">${t}</button>`).join('')}
     </div>

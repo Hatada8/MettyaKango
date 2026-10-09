@@ -61,3 +61,7 @@ table.list input[type=checkbox]{ width:16px; height:16px; accent-color:var(--nur
   .master-row.with-desc .small{ padding-left:8px; padding-right:8px; }
   .master-row .desc{ margin-left:0; }
 }
+.hours-table input[type=time]{ min-width:110px; }
+.hours-table select{ width:auto; min-width:80px; }
+.sun-text{ color:#B23A3A; }
+.sat-text{ color:#1E74B8; }
